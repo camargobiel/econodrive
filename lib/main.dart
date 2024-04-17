@@ -1,29 +1,18 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'pages/login.dart';
-import 'pages/register.dart';
+import 'app.dart';
 
-void main() {
+void main() async {
+  const firebaseConfig = FirebaseOptions(
+    apiKey: "AIzaSyC8nBho0jKTLxr1sBBkNHigr9YAvsp0k-A",
+    authDomain: "econodrive-6aa22.firebaseapp.com",
+    projectId: "econodrive-6aa22",
+    storageBucket: "econodrive-6aa22.appspot.com",
+    messagingSenderId: "558904259213",
+    appId: "1:558904259213:web:7b9c59c86884b32e1ca8c4",
+  );
+  await Firebase.initializeApp(options: firebaseConfig);
+
   runApp(const EconoDrive());
-}
-
-class EconoDrive extends StatelessWidget {
-  const EconoDrive({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: false,
-        primarySwatch: Colors.red,
-      ),
-      routes: {
-        "/login": (context) => const LoginPage(),
-        "/register": (context) => const RegisterPage(),
-      },
-      initialRoute: "/login",
-    );
-  }
 }

@@ -1,3 +1,6 @@
+import 'package:econodrive/components/error-message.dart';
+import 'package:econodrive/utils/errors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -10,16 +13,51 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  bool personal = true;
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  Map<String, String> formErrors = {};
+
+  bool _haveErrors() {
+    return formErrors["email"] != null || formErrors["password"] != null;
+  }
+
+  void _formatErrors(Object err) {
+    formErrors = {};
+    String error = err.toString();
+    String customError = errors[error] ?? "Erro desconhecido";
+    setState(() {
+      if (customError.contains("Senha")) {
+        formErrors["password"] = customError;
+      } else if (customError.contains("E-mail")) {
+        formErrors["email"] = customError;
+      } else {
+        formErrors["email"] = customError;
+        formErrors["password"] = customError;
+      }
+    });
+  }
+
+  void _login(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      Navigator.pushReplacementNamed(context, "/home");
+    } catch (err) {
+      _formatErrors(err);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool personal = true;
-
     return Scaffold(
       appBar: AppBar(),
       body: Container(
         padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
         child: SizedBox(
-          height: 380,
+          height: _haveErrors() ? 430 : 400,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -31,15 +69,18 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          personal = true;
+                          setState(() {
+                            personal = true;
+                          });
                         },
                         style: ButtonStyle(
-                            fixedSize: const MaterialStatePropertyAll(
-                              Size.fromHeight(50),
-                            ),
-                            backgroundColor: MaterialStatePropertyAll(
-                              personal == true ? Colors.red : Colors.black54,
-                            )),
+                          fixedSize: const MaterialStatePropertyAll(
+                            Size.fromHeight(50),
+                          ),
+                          backgroundColor: MaterialStatePropertyAll(
+                            personal == true ? Colors.red : Colors.black54,
+                          ),
+                        ),
                         child: const Row(
                           children: [
                             Icon(
@@ -59,7 +100,9 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          personal = false;
+                          setState(() {
+                            personal = false;
+                          });
                         },
                         style: ButtonStyle(
                           fixedSize: const MaterialStatePropertyAll(
@@ -85,16 +128,16 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-              const Row(
+              Row(
                 children: [
                   Icon(
-                    Icons.person,
+                    personal == true ? Icons.person : Icons.car_rental,
                     color: Colors.red,
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 10,
                   ),
-                  Text(
+                  const Text(
                     "Entrar",
                     style: TextStyle(
                       color: Colors.red,
@@ -105,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const Text(
-                "Ainda não tem conta na plataforma? Cadastre-se agora.",
+                "Digite seus dados para entrar na plataforma.",
                 style: TextStyle(
                   color: Colors.black26,
                   fontSize: 15,
@@ -113,25 +156,46 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               SizedBox(
-                height: 220,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const TextField(
+                    TextField(
                       decoration: InputDecoration(
-                        label: Text("E-mail"),
-                        border: OutlineInputBorder(),
+                        label: personal == true
+                            ? const Text("E-mail")
+                            : const Text("E-mail principal da locadora"),
+                        border: const OutlineInputBorder(),
+                        error: formErrors["email"] != null
+                            ? ErrorMessage(
+                                message: formErrors["email"] as String,
+                              )
+                            : null,
                       ),
+                      controller: emailController,
                     ),
-                    const TextField(
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    TextField(
                       decoration: InputDecoration(
-                        label: Text("Senha"),
-                        border: OutlineInputBorder(),
+                        label: const Text("Senha"),
+                        border: const OutlineInputBorder(),
+                        error: formErrors["password"] != null
+                            ? ErrorMessage(
+                                message: formErrors["password"] as String,
+                              )
+                            : null,
                       ),
                       obscureText: true,
+                      controller: passwordController,
+                    ),
+                    const SizedBox(
+                      height: 20,
                     ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        _login(context);
+                      },
                       style: const ButtonStyle(
                         fixedSize: MaterialStatePropertyAll(
                           Size(
@@ -144,6 +208,9 @@ class _LoginPageState extends State<LoginPage> {
                         "Entrar",
                         style: TextStyle(fontSize: 15),
                       ),
+                    ),
+                    const SizedBox(
+                      height: 20,
                     ),
                     TextButton(
                       onPressed: () {
