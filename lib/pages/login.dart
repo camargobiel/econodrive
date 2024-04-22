@@ -53,7 +53,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Image.asset(
+              "../../images/logo.png",
+              width: 140,
+            ),
+          ],
+        ),
+      ),
       body: Container(
         padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
         child: SizedBox(
@@ -217,7 +226,7 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.pushReplacementNamed(context, "/register");
                       },
                       child: const Text(
-                        "Já tem conta? Clique para entrar.",
+                        "Ainda não tem conta? Clique aqui para criar uma.",
                         style: TextStyle(
                           fontSize: 15,
                         ),

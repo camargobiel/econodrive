@@ -5,6 +5,17 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Image.asset(
+              "../../images/logo.png",
+              width: 140,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
