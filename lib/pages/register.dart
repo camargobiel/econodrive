@@ -24,7 +24,6 @@ class _RegisterPageState extends State<RegisterPage> {
   void _formatErrors(Object err) {
     formErrors = {};
     String error = err.toString();
-    print(error);
     String customError = errors[error] ?? "Erro desconhecido";
     setState(() {
       if (customError.toLowerCase().contains("senha")) {
@@ -44,7 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
         email: emailController.text,
         password: passwordController.text,
       );
-      Navigator.pushReplacementNamed(context, "/login");
+      Navigator.pushReplacementNamed(context, "/home");
     } catch (err) {
       _formatErrors(err);
     }
