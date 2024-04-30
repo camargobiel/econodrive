@@ -3,6 +3,7 @@ import 'package:econodrive/utils/errors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,14 +13,12 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final firestore = FirebaseFirestore.instance;
   bool personal = true;
+  TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   Map<String, String> formErrors = {};
-
-  bool _haveErrors() {
-    return formErrors["email"] != null || formErrors["password"] != null;
-  }
 
   void _formatErrors(Object err) {
     formErrors = {};
@@ -38,12 +37,26 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _register(BuildContext context) async {
+    if (nameController.value.text == "") {
+      setState(() {
+        formErrors["name"] = "Nome é obrigatório";
+      });
+      return;
+    }
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      CollectionReference usersCollectionRef = firestore.collection('users');
+      var authResponse =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text,
       );
-      Navigator.pushReplacementNamed(context, "/home");
+      if (authResponse.user?.uid != null) {
+        await authResponse.user!.updateDisplayName(nameController.value.text);
+        await usersCollectionRef.doc(authResponse.user!.uid).set({
+          "type": personal == true ? "personal" : "rental",
+        });
+      }
+      await Navigator.pushReplacementNamed(context, "/home");
     } catch (err) {
       _formatErrors(err);
     }
@@ -65,10 +78,8 @@ class _RegisterPageState extends State<RegisterPage> {
       body: Container(
         padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
         child: SizedBox(
-          height: _haveErrors() ? 430 : 400,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               SizedBox(
                 child: Row(
@@ -136,6 +147,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
               ),
+              const SizedBox(
+                height: 20,
+              ),
               Row(
                 children: [
                   Icon(
@@ -155,6 +169,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ],
               ),
+              const SizedBox(
+                height: 20,
+              ),
               const Text(
                 "Digite seus dados para cadastrar na plataforma.",
                 style: TextStyle(
@@ -163,10 +180,30 @@ class _RegisterPageState extends State<RegisterPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(
+                height: 20,
+              ),
               SizedBox(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        label: personal == true
+                            ? const Text("Nome completo")
+                            : const Text("Nome da locadora"),
+                        border: const OutlineInputBorder(),
+                        error: formErrors["name"] != null
+                            ? ErrorMessage(
+                                message: formErrors["name"] as String,
+                              )
+                            : null,
+                      ),
+                      controller: nameController,
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
                     TextField(
                       decoration: InputDecoration(
                         label: personal == true
@@ -196,6 +233,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       obscureText: true,
                       controller: passwordController,
+                    ),
+                    const SizedBox(
+                      height: 20,
                     ),
                     const SizedBox(
                       height: 20,
