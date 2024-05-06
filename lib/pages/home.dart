@@ -1,6 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -10,11 +10,32 @@ class Home extends StatelessWidget {
     Navigator.pushReplacementNamed(context, "/login");
   }
 
+  _readUser() {
+    var user = FirebaseAuth.instance.currentUser;
+    var account = FirebaseFirestore.instance.collection("users").doc(user!.uid);
+    return account.snapshots();
+  }
+
   @override
   Widget build(BuildContext context) {
-    var userName = FirebaseAuth.instance.currentUser!.displayName;
-
     return Scaffold(
+      floatingActionButton: StreamBuilder<dynamic>(
+          stream: _readUser(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const CircularProgressIndicator();
+            }
+            bool isRentalCompany = snapshot.data["type"] == "rental";
+            if (isRentalCompany == false) {
+              return const SizedBox();
+            }
+            return FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, "/new-notice");
+              },
+              child: const Icon(Icons.add),
+            );
+          }),
       appBar: AppBar(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

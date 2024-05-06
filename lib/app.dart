@@ -1,4 +1,5 @@
 import 'package:econodrive/pages/home.dart';
+import 'package:econodrive/pages/new-notice.dart';
 
 import 'pages/login.dart';
 import 'pages/register.dart';
@@ -19,6 +20,7 @@ class EconoDrive extends StatelessWidget {
         "/login": (context) => const LoginPage(),
         "/register": (context) => const RegisterPage(),
         "/home": (context) => const Home(),
+        "/new-notice": (context) => const NewNoticePage()
       },
       initialRoute: "/login",
     );
