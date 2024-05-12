@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SelectCity extends StatefulWidget {
-  const SelectCity({super.key});
+  final Function(String) onCitySelected;
+
+  const SelectCity({
+    super.key,
+    required this.onCitySelected,
+  });
 
   @override
   State<SelectCity> createState() => _SelectCityState();
@@ -42,47 +47,51 @@ class _SelectCityState extends State<SelectCity> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Pesquise por uma cidade',
-            prefixIcon: Icon(Icons.search),
-          ),
-          onChanged: (value) {
-            setState(() {
-              _futureCities = fetchCities(value);
-            });
-          },
-        ),
-        Expanded(
-          child: FutureBuilder(
-            future: _futureCities,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              final cities = snapshot.data as Map<String, dynamic>;
-              return ListView.builder(
-                itemCount: cities['results'].length,
-                itemBuilder: (context, index) {
-                  final city = cities['results'][index];
-                  return ListTile(
-                    title: Text(city['name']),
-                    onTap: () {
-                      // Lógica quando uma cidade é selecionada
-                    },
-                  );
-                },
-              );
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              hintText: 'Pesquise por uma cidade',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) {
+              setState(() {
+                _futureCities = fetchCities(value);
+              });
             },
           ),
-        ),
-      ],
+          Expanded(
+            child: FutureBuilder(
+              future: _futureCities,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                final cities = snapshot.data as Map<String, dynamic>;
+                return ListView.builder(
+                  itemCount: cities['results'].length,
+                  itemBuilder: (context, index) {
+                    final city = cities['results'][index];
+                    return ListTile(
+                      title: Text(city['name']),
+                      onTap: () {
+                        widget.onCitySelected(city['name']);
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

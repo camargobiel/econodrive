@@ -1,16 +1,23 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:econodrive/components/select-city.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/constants.dart';
 
 class NewNoticePage extends StatefulWidget {
-  const NewNoticePage({super.key});
+  const NewNoticePage({
+    super.key,
+    Map<String, dynamic>? notice,
+  });
 
   @override
   State<NewNoticePage> createState() => _NewNoticePageState();
 }
 
 class _NewNoticePageState extends State<NewNoticePage> {
+  final firestore = FirebaseFirestore.instance;
+
   Map<String, dynamic> fields = {
     'originCity': "",
     "destinyCity": "",
@@ -20,22 +27,83 @@ class _NewNoticePageState extends State<NewNoticePage> {
     "vehicleType": ""
   };
 
-  chooseCity() {
+  chooseCity(String field) {
     showModalBottomSheet<void>(
       context: context,
       builder: (BuildContext context) {
-        return const SelectCity();
+        return SelectCity(
+          onCitySelected: (city) {
+            setState(() {
+              fields[field] = city;
+            });
+            Navigator.pop(context);
+          },
+        );
       },
     );
   }
 
-  submit() {
-    print(fields);
+  _create(BuildContext context) async {
+    var user = FirebaseAuth.instance.currentUser;
+    var noticesCollectionRef = FirebaseFirestore.instance.collection("notices");
+    var docRef = await noticesCollectionRef.add(
+      {
+        ...fields,
+        "createdBy": user!.uid,
+        "createdAt": DateTime.now().toIso8601String(),
+      },
+    );
+    var noticeId = docRef.id;
+    await docRef.update({
+      "id": noticeId,
+    });
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      "/home",
+      (route) => false,
+    );
+  }
+
+  _edit(BuildContext context, Map noticeToEdit) async {
+    var noticesCollectionRef = FirebaseFirestore.instance.collection("notices");
+    await noticesCollectionRef.doc(noticeToEdit["id"]).update(
+      {
+        ...fields,
+      },
+    );
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      "/my-notices",
+      (route) => false,
+    );
+  }
+
+  submit(BuildContext context, Map? noticeToEdit) async {
+    try {
+      if (noticeToEdit != null) {
+        await _edit(context, noticeToEdit);
+        return;
+      }
+      await _create(context);
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final arguments = (ModalRoute.of(context)?.settings.arguments) as Map?;
+    Map? noticeToEdit = arguments?["notice"];
     final formKey = GlobalKey<FormState>();
+
+    fields = {
+      'originCity': noticeToEdit?["originCity"] ?? "",
+      "destinyCity": noticeToEdit?["destinyCity"] ?? "",
+      "withdrawDate": noticeToEdit?["withdrawDate"] ?? "",
+      "returnDate": noticeToEdit?["returnDate"] ?? "",
+      "vehicleName": noticeToEdit?["vehicleName"] ?? "",
+      "vehicleType": noticeToEdit?["vehicleType"] ?? "compactHatch"
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -57,31 +125,55 @@ class _NewNoticePageState extends State<NewNoticePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          chooseCity();
-                        },
-                        style: const ButtonStyle(
-                          fixedSize: MaterialStatePropertyAll(
-                            Size.fromHeight(40),
+                      Flexible(
+                        child: SizedBox(
+                          width: double.maxFinite,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              chooseCity("originCity");
+                            },
+                            style: const ButtonStyle(
+                              fixedSize: MaterialStatePropertyAll(
+                                Size.fromHeight(40),
+                              ),
+                            ),
+                            child: Text(
+                              fields["originCity"] == ""
+                                  ? "Selecionar cidade de origem"
+                                  : "Origem: ${fields["originCity"]}",
+                            ),
                           ),
                         ),
-                        child: const Text("Selecionar cidade de origem"),
+                      ),
+                      const SizedBox(
+                        width: 20,
                       ),
                       const Icon(
-                        Icons.keyboard_arrow_right,
-                        color: Colors.black54,
+                        Icons.arrow_circle_right,
+                        color: Colors.red,
                       ),
-                      ElevatedButton(
-                        style: const ButtonStyle(
-                          fixedSize: MaterialStatePropertyAll(
-                            Size.fromHeight(40),
+                      const SizedBox(
+                        width: 20,
+                      ),
+                      Flexible(
+                        child: SizedBox(
+                          width: double.maxFinite,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              chooseCity("destinyCity");
+                            },
+                            style: const ButtonStyle(
+                              fixedSize: MaterialStatePropertyAll(
+                                Size.fromHeight(40),
+                              ),
+                            ),
+                            child: Text(
+                              fields["destinyCity"] == ""
+                                  ? "Selecionar cidade de destino"
+                                  : "Destino: ${fields["destinyCity"]}",
+                            ),
                           ),
                         ),
-                        onPressed: () {
-                          chooseCity();
-                        },
-                        child: const Text("Selecionar cidade de destino"),
                       ),
                     ],
                   ),
@@ -93,6 +185,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
                     children: [
                       Flexible(
                         child: TextFormField(
+                          initialValue: fields["withdrawDate"],
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             label: Text("Data de retirada"),
@@ -116,6 +209,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
                       ),
                       Flexible(
                         child: TextFormField(
+                          initialValue: fields["returnDate"],
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             label: Text("Data de devolução"),
@@ -137,6 +231,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
                     height: 20,
                   ),
                   TextFormField(
+                    initialValue: fields["vehicleName"],
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       label: Text("Nome do veículo"),
@@ -155,7 +250,13 @@ class _NewNoticePageState extends State<NewNoticePage> {
                     height: 20,
                   ),
                   DropdownButtonFormField(
-                    items: vehicleTypes,
+                    value: fields["vehicleType"],
+                    items: vehicleTypes.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       fields["vehicleType"] = value as String;
                     },
@@ -179,9 +280,9 @@ class _NewNoticePageState extends State<NewNoticePage> {
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Processing Data')),
+                        const SnackBar(content: Text('Salvando')),
                       );
-                      submit();
+                      submit(context, noticeToEdit);
                     }
                   },
                   style: ButtonStyle(
