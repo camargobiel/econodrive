@@ -27,7 +27,7 @@ class NoticeCard extends StatelessWidget {
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
                     notice["originCity"],
@@ -57,29 +57,17 @@ class NoticeCard extends StatelessWidget {
                 height: 20,
               ),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    notice["withdrawDate"],
+                    "Retirada: ${notice["withdrawDate"]}",
                     style: const TextStyle(
                       fontSize: 15,
                       color: Colors.black54,
                     ),
                   ),
-                  const SizedBox(
-                    width: 8,
-                  ),
-                  const Icon(
-                    Icons.arrow_forward,
-                    size: 17,
-                    color: Colors.black54,
-                  ),
-                  const SizedBox(
-                    width: 8,
-                  ),
                   Text(
-                    notice["returnDate"],
+                    "Devolução: ${notice["returnDate"]}",
                     style: const TextStyle(
                       fontSize: 15,
                       color: Colors.black54,
@@ -120,7 +108,15 @@ class NoticeCard extends StatelessWidget {
                 height: 30,
               ),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    "/notice-details",
+                    arguments: {
+                      "notice": notice.data(),
+                    },
+                  );
+                },
                 style: ButtonStyle(
                   fixedSize: MaterialStateProperty.all(
                     const Size(

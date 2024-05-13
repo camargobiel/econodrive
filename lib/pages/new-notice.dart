@@ -8,7 +8,6 @@ import '../utils/constants.dart';
 class NewNoticePage extends StatefulWidget {
   const NewNoticePage({
     super.key,
-    Map<String, dynamic>? notice,
   });
 
   @override
@@ -17,6 +16,7 @@ class NewNoticePage extends StatefulWidget {
 
 class _NewNoticePageState extends State<NewNoticePage> {
   final firestore = FirebaseFirestore.instance;
+  final formKey = GlobalKey<FormState>();
 
   Map<String, dynamic> fields = {
     'originCity': "",
@@ -24,10 +24,10 @@ class _NewNoticePageState extends State<NewNoticePage> {
     "withdrawDate": "",
     "returnDate": "",
     "vehicleName": "",
-    "vehicleType": ""
+    "vehicleType": "compactHatch"
   };
 
-  chooseCity(String field) {
+  _chooseCity(String field) {
     showModalBottomSheet<void>(
       context: context,
       builder: (BuildContext context) {
@@ -50,6 +50,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
       {
         ...fields,
         "createdBy": user!.uid,
+        "createdByName": user.displayName,
         "createdAt": DateTime.now().toIso8601String(),
       },
     );
@@ -57,9 +58,17 @@ class _NewNoticePageState extends State<NewNoticePage> {
     await docRef.update({
       "id": noticeId,
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Anúncio criado com sucesso!',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
     Navigator.pushNamedAndRemoveUntil(
       context,
-      "/home",
+      "/my-notices",
       (route) => false,
     );
   }
@@ -71,6 +80,14 @@ class _NewNoticePageState extends State<NewNoticePage> {
         ...fields,
       },
     );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Anúncio salvo com sucesso!',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
     Navigator.pushNamedAndRemoveUntil(
       context,
       "/my-notices",
@@ -78,7 +95,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
     );
   }
 
-  submit(BuildContext context, Map? noticeToEdit) async {
+  _submit(BuildContext context, Map? noticeToEdit) async {
     try {
       if (noticeToEdit != null) {
         await _edit(context, noticeToEdit);
@@ -94,20 +111,20 @@ class _NewNoticePageState extends State<NewNoticePage> {
   Widget build(BuildContext context) {
     final arguments = (ModalRoute.of(context)?.settings.arguments) as Map?;
     Map? noticeToEdit = arguments?["notice"];
-    final formKey = GlobalKey<FormState>();
+    bool? edit = arguments?["edit"];
 
-    fields = {
-      'originCity': noticeToEdit?["originCity"] ?? "",
-      "destinyCity": noticeToEdit?["destinyCity"] ?? "",
-      "withdrawDate": noticeToEdit?["withdrawDate"] ?? "",
-      "returnDate": noticeToEdit?["returnDate"] ?? "",
-      "vehicleName": noticeToEdit?["vehicleName"] ?? "",
-      "vehicleType": noticeToEdit?["vehicleType"] ?? "compactHatch"
-    };
+    // Verifica se há valores preexistentes e os substitui pelos padrão apenas se necessário
+    noticeToEdit?.forEach((key, value) {
+      if (fields.containsKey(key)) {
+        fields[key] = value;
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Novo anúncio"),
+        title: edit == true
+            ? const Text("Editar anúncio")
+            : const Text("Criar anúncio"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(30),
@@ -130,7 +147,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
                           width: double.maxFinite,
                           child: ElevatedButton(
                             onPressed: () {
-                              chooseCity("originCity");
+                              _chooseCity("originCity");
                             },
                             style: const ButtonStyle(
                               fixedSize: MaterialStatePropertyAll(
@@ -160,7 +177,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
                           width: double.maxFinite,
                           child: ElevatedButton(
                             onPressed: () {
-                              chooseCity("destinyCity");
+                              _chooseCity("destinyCity");
                             },
                             style: const ButtonStyle(
                               fixedSize: MaterialStatePropertyAll(
@@ -279,10 +296,7 @@ class _NewNoticePageState extends State<NewNoticePage> {
                 ElevatedButton(
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Salvando')),
-                      );
-                      submit(context, noticeToEdit);
+                      _submit(context, noticeToEdit);
                     }
                   },
                   style: ButtonStyle(
@@ -291,7 +305,9 @@ class _NewNoticePageState extends State<NewNoticePage> {
                       50,
                     )),
                   ),
-                  child: const Text("Criar anúncio"),
+                  child: edit == true
+                      ? const Text("Salvar")
+                      : const Text("Criar anúncio"),
                 )
               ],
             )

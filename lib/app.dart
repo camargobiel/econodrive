@@ -2,6 +2,7 @@ import 'package:econodrive/components/bottom-navigation-bar.dart';
 import 'package:econodrive/pages/home.dart';
 import 'package:econodrive/pages/my-notices.dart';
 import 'package:econodrive/pages/new-notice.dart';
+import 'package:econodrive/pages/notice-details.dart';
 
 import 'pages/login.dart';
 import 'pages/register.dart';
@@ -23,7 +24,8 @@ class EconoDrive extends StatelessWidget {
         "/register": (context) => const RegisterPage(),
         "/home": (context) => const Home(),
         "/new-notice": (context) => const NewNoticePage(),
-        "/my-notices": (context) => const MyNotices()
+        "/my-notices": (context) => const MyNotices(),
+        "/notice-details": (context) => const NoticeDetailsPage()
       },
       initialRoute: "/login",
     );
