@@ -83,12 +83,64 @@ class MyNoticeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     "${notice["originCity"]} → ${notice["destinyCity"]}",
                     style: const TextStyle(
                       fontSize: 18,
                     ),
+                  ),
+                  PopupMenuButton(
+                    tooltip: "Opções",
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                      PopupMenuItem(
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.edit_note,
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            Text('Editar anúncio'),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            "/new-notice",
+                            arguments: {
+                              "notice": notice.data(),
+                              "edit": true,
+                            },
+                          );
+                        },
+                      ),
+                      PopupMenuItem(
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            Text(
+                              'Apagar anúncio',
+                              style: TextStyle(
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          _showDeleteConfirmation(context);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -147,41 +199,7 @@ class MyNoticeCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/new-notice",
-                        arguments: {
-                          "notice": notice.data(),
-                          "edit": true,
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      minimumSize: const Size(150, 40),
-                    ),
-                    icon: const Icon(Icons.edit_rounded),
-                    label: const Text("Editar anúncio"),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      _showDeleteConfirmation(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      minimumSize: const Size(150, 40),
-                    ),
-                    icon: const Icon(Icons.delete),
-                    label: const Text("Excluir anúncio"),
-                  ),
-                ],
-              ),
+              const SizedBox(height: 10),
             ],
           ),
         ),
