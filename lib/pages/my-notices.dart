@@ -15,7 +15,11 @@ class MyNotices extends StatefulWidget {
 
 class _MyNoticesState extends State<MyNotices> {
   _readNotices() {
-    var notices = FirebaseFirestore.instance.collection("notices").snapshots();
+    var user = FirebaseAuth.instance.currentUser;
+    var notices = FirebaseFirestore.instance
+        .collection("notices")
+        .where("createdBy", isEqualTo: user!.uid)
+        .snapshots();
     return notices;
   }
 
@@ -46,7 +50,7 @@ class _MyNoticesState extends State<MyNotices> {
           }
           return FloatingActionButton(
             onPressed: () {
-              Navigator.pushNamed(context, "/new-notice");
+              Navigator.pushNamed(context, "/upsert-notice");
             },
             child: const Icon(Icons.add),
           );

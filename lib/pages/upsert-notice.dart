@@ -3,18 +3,16 @@ import 'package:econodrive/components/select-city.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../utils/constants.dart';
-
-class NewNoticePage extends StatefulWidget {
-  const NewNoticePage({
+class UpsertNoticePage extends StatefulWidget {
+  const UpsertNoticePage({
     super.key,
   });
 
   @override
-  State<NewNoticePage> createState() => _NewNoticePageState();
+  State<UpsertNoticePage> createState() => _UpsertNoticePageState();
 }
 
-class _NewNoticePageState extends State<NewNoticePage> {
+class _UpsertNoticePageState extends State<UpsertNoticePage> {
   final firestore = FirebaseFirestore.instance;
   final formKey = GlobalKey<FormState>();
 
@@ -265,28 +263,6 @@ class _NewNoticePageState extends State<NewNoticePage> {
                   ),
                   const SizedBox(
                     height: 20,
-                  ),
-                  DropdownButtonFormField(
-                    value: fields["vehicleType"],
-                    items: vehicleTypes.entries.map((entry) {
-                      return DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      fields["vehicleType"] = value as String;
-                    },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      label: Text("Tipo de veículo"),
-                    ),
-                    validator: (value) {
-                      if (value == "" || value == null) {
-                        return "Campo obrigatório";
-                      }
-                      return null;
-                    },
                   ),
                 ],
               ),

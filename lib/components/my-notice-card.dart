@@ -110,7 +110,7 @@ class MyNoticeCard extends StatelessWidget {
                         onTap: () {
                           Navigator.pushNamed(
                             context,
-                            "/new-notice",
+                            "/upsert-notice",
                             arguments: {
                               "notice": notice.data(),
                               "edit": true,
