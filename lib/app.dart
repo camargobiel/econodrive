@@ -1,5 +1,5 @@
 import 'package:econodrive/pages/home.dart';
-import 'package:econodrive/pages/my-notices.dart';
+import 'package:econodrive/pages/my_notices.dart';
 import 'package:econodrive/pages/my-vehicles.dart';
 import 'package:econodrive/pages/upsert-notice.dart';
 import 'package:econodrive/pages/notice-details.dart';

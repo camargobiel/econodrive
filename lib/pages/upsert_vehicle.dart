@@ -22,7 +22,7 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     'name': "",
     "type": "compactHatch",
     "avgConsumption": "",
-    "optionals": [
+    "optionals": <Map<String, dynamic>>[
       {"label": "Ar condicionado", "id": "air_conditioner", "value": false},
       {"label": "Central multimedia", "id": "multimedia", "value": false},
       {"label": "Radio Bluetooth", "id": "bluetooth_radio", "value": false},
@@ -36,13 +36,16 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
       context: context,
       builder: (buildContext) {
         return ChooseVehicleOptionalsAlert(
-            onSave: (optionals) {
-              setState(() {
-                fields["optionals"] = optionals;
-              });
-              Navigator.pop(context);
-            },
-            options: fields["optionals"]);
+          onSave: (List<Map<String, dynamic>> optionals) {
+            setState(() {
+              fields["optionals"] = optionals;
+            });
+            Navigator.pop(context);
+          },
+          options: List<Map<String, dynamic>>.from(
+            fields["optionals"],
+          ),
+        );
       },
     );
   }
@@ -54,22 +57,19 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     var docRef = await vehiclesCollectionRef.add(
       {
         ...fields,
-        "optionals":
-            fields["optionals"].where((optional) => optional["value"] == true),
+        "optionals": fields["optionals"].toList(),
         "createdBy": user!.uid,
         "createdByName": user.displayName,
         "createdAt": DateTime.now().toIso8601String(),
       },
     );
-    var noticeId = docRef.id;
+    var vehicleId = docRef.id;
     await docRef.update({
-      "id": noticeId,
+      "id": vehicleId,
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'Veículo criado com sucesso!',
-        ),
+        content: Text('Veículo criado com sucesso!'),
         backgroundColor: Colors.green,
       ),
     );
@@ -80,19 +80,18 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     );
   }
 
-  _edit(BuildContext context, Map noticeToEdit) async {
+  _edit(BuildContext context, Map vehicleToEdit) async {
     var vehiclesCollectionRef =
         FirebaseFirestore.instance.collection("vehicles");
-    await vehiclesCollectionRef.doc(noticeToEdit["id"]).update(
+    await vehiclesCollectionRef.doc(vehicleToEdit["id"]).update(
       {
         ...fields,
+        "optionals": fields["optionals"].toList(),
       },
     );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'Veículo salvo com sucesso!',
-        ),
+        content: Text('Veículo salvo com sucesso!'),
         backgroundColor: Colors.green,
       ),
     );
@@ -103,10 +102,10 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     );
   }
 
-  _submit(BuildContext context, Map? noticeToEdit) async {
+  _submit(BuildContext context, Map? vehicleToEdit) async {
     try {
-      if (noticeToEdit != null) {
-        await _edit(context, noticeToEdit);
+      if (vehicleToEdit != null) {
+        await _edit(context, vehicleToEdit);
         return;
       }
       await _create(context);
@@ -121,11 +120,13 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     Map? vehicleToEdit = arguments?["vehicle"];
     bool? edit = arguments?["edit"];
 
-    vehicleToEdit?.forEach((key, value) {
-      if (fields.containsKey(key)) {
-        fields[key] = value;
-      }
-    });
+    if (fields["name"] == "") {
+      vehicleToEdit?.forEach((key, value) {
+        if (fields.containsKey(key)) {
+          fields[key] = value;
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -237,7 +238,7 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: fields["optionals"]
+                    children: List<Widget>.from(fields["optionals"]
                         .where((optional) => optional["value"] == true)
                         .map<Widget>(
                       (optional) {
@@ -267,7 +268,7 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
                           ],
                         );
                       },
-                    ).toList(),
+                    ).toList()),
                   )
                 ],
               ),

@@ -10,6 +10,69 @@ class MyVehicleCard extends StatelessWidget {
     required this.vehicle,
   });
 
+  void _delete(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Veículo excluído com sucesso!',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+    FirebaseFirestore.instance
+        .collection("vehicles")
+        .doc(vehicle["id"])
+        .delete();
+    Navigator.pop(context);
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (buildContext) {
+        return AlertDialog(
+          title: const Text(
+            "Excluir anúncio",
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "Tem certeza que deseja excluir esse veículo? Ele será excluído para sempre.",
+            style: TextStyle(
+              color: Colors.black54,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _delete(context);
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateColor.resolveWith(
+                  (states) => Colors.red,
+                ),
+              ),
+              child: const Text("Excluir"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -18,6 +81,61 @@ class MyVehicleCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                PopupMenuButton(
+                  tooltip: "Opções",
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                    PopupMenuItem(
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.edit_note,
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text('Editar veículo'),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          "/upsert-vehicle",
+                          arguments: {
+                            "vehicle": vehicle.data(),
+                            "edit": true,
+                          },
+                        );
+                      },
+                    ),
+                    PopupMenuItem(
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            'Apagar veículo',
+                            style: TextStyle(
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        _showDeleteConfirmation(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

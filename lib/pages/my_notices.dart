@@ -4,7 +4,7 @@ import 'package:econodrive/components/bottom-navigation-bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../components/my-notice-card.dart';
+import '../components/my_notice_card.dart';
 
 class MyNotices extends StatefulWidget {
   const MyNotices({super.key});
