@@ -16,8 +16,10 @@ class CustomAppBarTitle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset(
-          "../../images/logo.png",
+        const Image(
+          image: AssetImage(
+            "images/logo.png",
+          ),
           width: 140,
         ),
         TextButton(

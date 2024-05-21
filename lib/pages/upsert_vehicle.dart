@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cross_file_image/cross_file_image.dart';
 import 'package:econodrive/components/choose-vehicle-optionals.dart';
 import 'package:econodrive/utils/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -19,7 +22,7 @@ class UpsertVehiclePage extends StatefulWidget {
 class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
   final firestore = FirebaseFirestore.instance;
   final formKey = GlobalKey<FormState>();
-  late XFile? pickedVehicleImage;
+  XFile? pickedVehicleImage;
   String mainRoute = "/my-vehicles";
 
   Map<String, dynamic> fields = {
@@ -167,172 +170,209 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
             ? const Text("Editar veículo")
             : const Text("Criar veículo"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: TextFormField(
-                          initialValue: fields["name"],
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            label: Text("Nome do veículo"),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: TextFormField(
+                            initialValue: fields["name"],
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              label: Text("Nome do veículo"),
+                            ),
+                            onChanged: (value) {
+                              fields["name"] = value;
+                            },
+                            validator: (value) {
+                              if (value == "") {
+                                return "Campo obrigatório";
+                              }
+                              return null;
+                            },
                           ),
-                          onChanged: (value) {
-                            fields["name"] = value;
-                          },
-                          validator: (value) {
-                            if (value == "") {
-                              return "Campo obrigatório";
-                            }
-                            return null;
-                          },
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: DropdownButtonFormField(
-                          value: fields["type"],
-                          items: vehicleTypes.entries.map((entry) {
-                            return DropdownMenuItem(
-                              value: entry.key,
-                              child: Text(entry.value),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            fields["type"] = value as String;
-                          },
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            label: Text("Tipo de veículo"),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: DropdownButtonFormField(
+                            value: fields["type"],
+                            items: vehicleTypes.entries.map((entry) {
+                              return DropdownMenuItem(
+                                value: entry.key,
+                                child: Text(entry.value),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              fields["type"] = value as String;
+                            },
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              label: Text("Tipo de veículo"),
+                            ),
+                            validator: (value) {
+                              if (value == "" || value == null) {
+                                return "Campo obrigatório";
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (value) {
-                            if (value == "" || value == null) {
-                              return "Campo obrigatório";
-                            }
-                            return null;
-                          },
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: TextFormField(
-                          keyboardType: TextInputType.number,
-                          initialValue: fields["avgConsumption"],
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            label: Text("Consumo médio (km/L)"),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: TextFormField(
+                            keyboardType: TextInputType.number,
+                            initialValue: fields["avgConsumption"],
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              label: Text("Consumo médio (km/L)"),
+                            ),
+                            onChanged: (value) {
+                              fields["avgConsumption"] = value;
+                            },
+                            validator: (value) {
+                              if (value == "") {
+                                return "Campo obrigatório";
+                              }
+                              return null;
+                            },
                           ),
-                          onChanged: (value) {
-                            fields["avgConsumption"] = value;
-                          },
-                          validator: (value) {
-                            if (value == "") {
-                              return "Campo obrigatório";
-                            }
-                            return null;
-                          },
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _showOptionalsAlert(context);
-                    },
-                    child: const Text("Escolher opcionais"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      pickImage();
-                    },
-                    child: const Text('Upload Image'),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List<Widget>.from(fields["optionals"]
-                        .where((optional) => optional["value"] == true)
-                        .map<Widget>(
-                      (optional) {
-                        return Column(
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.check,
-                                  color: Colors.black54,
-                                ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text(
-                                  optional["label"],
-                                  style: const TextStyle(
-                                    fontSize: 15,
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _showOptionalsAlert(context);
+                      },
+                      child: const Text("Escolher opcionais"),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: List<Widget>.from(fields["optionals"]
+                          .where((optional) => optional["value"] == true)
+                          .map<Widget>(
+                        (optional) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check,
                                     color: Colors.black54,
                                   ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    optional["label"],
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              )
+                            ],
+                          );
+                        },
+                      ).toList()),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            pickImage();
+                          },
+                          child: const Text('Escolher imagem do veículo'),
+                        ),
+                        pickedVehicleImage != null
+                            ? IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    pickedVehicleImage = null;
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.black54,
                                 ),
-                              ],
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            )
-                          ],
-                        );
-                      },
-                    ).toList()),
+                              )
+                            : const SizedBox(),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    pickedVehicleImage != null
+                        ? Column(
+                            children: [
+                              Image(
+                                image: XFileImage(pickedVehicleImage!),
+                              ),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                            ],
+                          )
+                        : const SizedBox(),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        _submit(context, vehicleToEdit);
+                      }
+                    },
+                    style: ButtonStyle(
+                      fixedSize: MaterialStateProperty.all(const Size(
+                        double.maxFinite,
+                        50,
+                      )),
+                    ),
+                    child: edit == true
+                        ? const Text("Salvar")
+                        : const Text("Criar veículo"),
                   )
                 ],
-              ),
-            ),
-            Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      _submit(context, vehicleToEdit);
-                    }
-                  },
-                  style: ButtonStyle(
-                    fixedSize: MaterialStateProperty.all(const Size(
-                      double.maxFinite,
-                      50,
-                    )),
-                  ),
-                  child: edit == true
-                      ? const Text("Salvar")
-                      : const Text("Criar veículo"),
-                )
-              ],
-            )
-          ],
+              )
+            ],
+          ),
         ),
       ),
     );

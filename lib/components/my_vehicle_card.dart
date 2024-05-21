@@ -77,7 +77,7 @@ class MyVehicleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -136,15 +136,18 @@ class MyVehicleCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(
+              height: 10,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Flexible(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      "https://imgd-ct.aeplcdn.com/664x415/n/cw/ec/141125/kwid-exterior-right-front-three-quarter-3.jpeg?isig=0&q=80",
-                      height: 180,
+                      vehicle["image"],
+                      height: 160,
                     ),
                   ),
                 ),
@@ -170,7 +173,7 @@ class MyVehicleCard extends StatelessWidget {
                 Text(
                   vehicleTypes[vehicle["type"]]!,
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 16,
                     color: Colors.black54,
                   ),
                 ),
@@ -184,7 +187,7 @@ class MyVehicleCard extends StatelessWidget {
                 Text(
                   "Consumo médio: ${vehicle['avgConsumption']}km/L",
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: 15,
                     color: Colors.black54,
                   ),
                 ),
@@ -199,7 +202,7 @@ class MyVehicleCard extends StatelessWidget {
                 const Text(
                   "Opcionais:",
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -215,7 +218,7 @@ class MyVehicleCard extends StatelessWidget {
                       return Text(
                         optional["label"],
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                         ),
                       );
                     },

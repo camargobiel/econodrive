@@ -66,10 +66,12 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
-            Image.asset(
-              "../../images/logo.png",
+            Image(
+              image: AssetImage(
+                "images/logo.png",
+              ),
               width: 140,
             ),
           ],
