@@ -30,25 +30,25 @@ class CustomBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> buttons = [
       {
-        "label": 'Página inicial',
+        "label": 'Home',
         "icon": const Icon(Icons.home),
         "route": "/home",
         "permission": ""
       },
       {
-        "label": 'Meus anúncios',
+        "label": 'Anúncios',
         "icon": const Icon(Icons.announcement),
         "route": "/my-notices",
         "permission": "rental"
       },
       {
-        "label": 'Meus veículos',
+        "label": 'Veículos',
         "icon": const Icon(Icons.car_rental),
         "route": "/my-vehicles",
         "permission": "rental"
       },
       {
-        "label": 'Meu perfil',
+        "label": 'Perfil',
         "icon": const Icon(Icons.person),
         "route": "/profile",
         "permission": ""

@@ -55,21 +55,14 @@ class MyVehicles extends StatelessWidget {
                 }
                 var vehicles = snapshot.data!.docs;
                 return ListView(
-                  children: <Widget>[
-                    SizedBox(
-                      height: double.maxFinite,
-                      child: ListView(
-                        scrollDirection: Axis.vertical,
-                        children: vehicles.map(
-                          (vehicle) {
-                            return MyVehicleCard(
-                              vehicle: vehicle,
-                            );
-                          },
-                        ).toList(),
-                      ),
-                    ),
-                  ],
+                  scrollDirection: Axis.vertical,
+                  children: vehicles.map(
+                    (vehicle) {
+                      return MyVehicleCard(
+                        vehicle: vehicle,
+                      );
+                    },
+                  ).toList(),
                 );
               },
             ),

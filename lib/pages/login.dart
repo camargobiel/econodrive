@@ -68,7 +68,6 @@ class _LoginPageState extends State<LoginPage> {
         child: Container(
           padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
           child: SizedBox(
-            height: _haveErrors() ? 430 : 400,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -139,6 +138,9 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
+                const SizedBox(
+                  height: 20,
+                ),
                 Row(
                   children: [
                     Icon(
@@ -158,6 +160,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
+                const SizedBox(
+                  height: 20,
+                ),
                 const Text(
                   "Digite seus dados para entrar na plataforma.",
                   style: TextStyle(
@@ -165,6 +170,9 @@ class _LoginPageState extends State<LoginPage> {
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+                const SizedBox(
+                  height: 20,
                 ),
                 SizedBox(
                   child: Column(

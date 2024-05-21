@@ -1,6 +1,7 @@
 import 'package:econodrive/pages/home.dart';
 import 'package:econodrive/pages/my_notices.dart';
 import 'package:econodrive/pages/my_vehicles.dart';
+import 'package:econodrive/pages/profile.dart';
 import 'package:econodrive/pages/upsert_notice.dart';
 import 'package:econodrive/pages/notice_details.dart';
 import 'package:econodrive/pages/upsert_vehicle.dart';
@@ -29,6 +30,7 @@ class EconoDrive extends StatelessWidget {
         "/notice-details": (context) => const NoticeDetailsPage(),
         "/my-vehicles": (context) => const MyVehicles(),
         "/upsert-vehicle": (context) => const UpsertVehiclePage(),
+        "/profile": (context) => const ProfilePage(),
       },
       initialRoute: "/login",
     );
