@@ -111,11 +111,13 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
     Map? noticeToEdit = arguments?["notice"];
     bool? edit = arguments?["edit"];
 
-    noticeToEdit?.forEach((key, value) {
-      if (fields.containsKey(key)) {
-        fields[key] = value;
-      }
-    });
+    if (fields["originCity"] == "") {
+      noticeToEdit?.forEach((key, value) {
+        if (fields.containsKey(key)) {
+          fields[key] = value;
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(

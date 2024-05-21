@@ -3,6 +3,9 @@ import 'package:econodrive/components/choose-vehicle-optionals.dart';
 import 'package:econodrive/utils/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class UpsertVehiclePage extends StatefulWidget {
   const UpsertVehiclePage({
@@ -16,6 +19,7 @@ class UpsertVehiclePage extends StatefulWidget {
 class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
   final firestore = FirebaseFirestore.instance;
   final formKey = GlobalKey<FormState>();
+  late XFile? pickedVehicleImage;
   String mainRoute = "/my-vehicles";
 
   Map<String, dynamic> fields = {
@@ -50,10 +54,30 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     );
   }
 
+  Future<String?> uploadImageToFirestore(XFile? image) async {
+    if (image != null) {
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference storageReference = FirebaseStorage.instance.ref().child(
+            'images/$fileName',
+          );
+      UploadTask uploadTask = storageReference.putFile(
+        File(
+          image.path,
+        ),
+      );
+      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
+      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+      return imageUrl;
+    }
+    return null;
+  }
+
   _create(BuildContext context) async {
     var user = FirebaseAuth.instance.currentUser;
     var vehiclesCollectionRef =
         FirebaseFirestore.instance.collection("vehicles");
+    print(pickedVehicleImage);
+    String? imageUrl = await uploadImageToFirestore(pickedVehicleImage);
     var docRef = await vehiclesCollectionRef.add(
       {
         ...fields,
@@ -61,6 +85,7 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
         "createdBy": user!.uid,
         "createdByName": user.displayName,
         "createdAt": DateTime.now().toIso8601String(),
+        "image": imageUrl,
       },
     );
     var vehicleId = docRef.id;
@@ -112,6 +137,14 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     } catch (e) {
       print(e);
     }
+  }
+
+  Future<void> pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      pickedVehicleImage = pickedImage;
+    });
   }
 
   @override
@@ -232,6 +265,12 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
                       _showOptionalsAlert(context);
                     },
                     child: const Text("Escolher opcionais"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      pickImage();
+                    },
+                    child: const Text('Upload Image'),
                   ),
                   const SizedBox(
                     height: 20,
