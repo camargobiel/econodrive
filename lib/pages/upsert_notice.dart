@@ -16,14 +16,16 @@ class UpsertNoticePage extends StatefulWidget {
 class _UpsertNoticePageState extends State<UpsertNoticePage> {
   final firestore = FirebaseFirestore.instance;
   final formKey = GlobalKey<FormState>();
-  var selectedVehicle;
+  Map<String, dynamic>? selectedVehicle;
+  bool _isInitialized = false;
+  Map? _noticeToEdit;
+  bool? _isEditing = false;
 
   Map<String, dynamic> fields = {
     'originCity': "",
     "destinyCity": "",
     "withdrawDate": "",
     "returnDate": "",
-    "vehicleId": "",
   };
 
   _chooseCity(String field) {
@@ -51,6 +53,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
         "createdBy": user!.uid,
         "createdByName": user.displayName,
         "createdAt": DateTime.now().toIso8601String(),
+        "vehicleId": selectedVehicle!["id"]
       },
     );
     var noticeId = docRef.id;
@@ -116,7 +119,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
             });
             Navigator.pop(context);
           },
-          selectedVehicleId: selectedVehicle["id"],
+          selectedVehicleId: selectedVehicle?["id"],
         );
       },
       context: context,
@@ -124,22 +127,34 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final arguments = (ModalRoute.of(context)?.settings.arguments) as Map?;
-    Map? noticeToEdit = arguments?["notice"];
-    bool? edit = arguments?["edit"];
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    if (fields["originCity"] == "") {
+    if (!_isInitialized) {
+      final arguments = (ModalRoute.of(context)?.settings.arguments) as Map?;
+      Map? noticeToEdit = arguments?["notice"];
+      bool? edit = arguments?["edit"];
+
+      setState(() {
+        _noticeToEdit = noticeToEdit;
+        _isEditing = edit;
+      });
+
       noticeToEdit?.forEach((key, value) {
         if (fields.containsKey(key)) {
           fields[key] = value;
         }
       });
+      selectedVehicle = noticeToEdit?["vehicleId"];
+      _isInitialized = true;
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: edit == true
+        title: _isEditing == true
             ? const Text("Editar anúncio")
             : const Text("Criar anúncio"),
       ),
@@ -282,7 +297,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
                       child: Text(
                         selectedVehicle == null
                             ? "Selecionar veículo"
-                            : "Selecionado: ${selectedVehicle["name"]}",
+                            : "Selecionado: ${selectedVehicle?["name"]}",
                       ),
                     )
                   ],
@@ -296,7 +311,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
                   ElevatedButton(
                     onPressed: () {
                       if (formKey.currentState!.validate()) {
-                        _submit(context, noticeToEdit);
+                        _submit(context, _noticeToEdit);
                       }
                     },
                     style: ButtonStyle(
@@ -305,7 +320,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
                         50,
                       )),
                     ),
-                    child: edit == true
+                    child: _isEditing == true
                         ? const Text("Salvar")
                         : const Text("Criar anúncio"),
                   )

@@ -5,75 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../utils/constants.dart';
-import '../utils/format-date.dart';
 
-class MyNoticeCard extends StatelessWidget {
+class NoticeCard extends StatelessWidget {
   final QueryDocumentSnapshot<Map<String, dynamic>> notice;
 
-  const MyNoticeCard({
+  const NoticeCard({
     super.key,
     required this.notice,
   });
-
-  void _delete(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Anúncio excluído com sucesso!',
-        ),
-        backgroundColor: Colors.red,
-      ),
-    );
-    FirebaseFirestore.instance.collection("notices").doc(notice["id"]).delete();
-    Navigator.pop(context);
-  }
-
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (buildContext) {
-        return AlertDialog(
-          title: const Text(
-            "Excluir anúncio",
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: const Text(
-            "Tem certeza que deseja excluir esse anúncio? Ele será excluído para sempre.",
-            style: TextStyle(
-              color: Colors.black54,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                "Cancelar",
-                style: TextStyle(
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _delete(context);
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateColor.resolveWith(
-                  (states) => Colors.red,
-                ),
-              ),
-              child: const Text("Excluir"),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _readNoticeVehicle() {
     var user = FirebaseAuth.instance.currentUser;
@@ -89,7 +28,7 @@ class MyNoticeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: SizedBox(
-        width: double.infinity,
+        width: 320,
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: StreamBuilder<dynamic>(
@@ -103,62 +42,8 @@ class MyNoticeCard extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        PopupMenuButton(
-                          tooltip: "Opções",
-                          itemBuilder: (BuildContext context) =>
-                              <PopupMenuEntry>[
-                            PopupMenuItem(
-                              child: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.edit_note,
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text('Editar anúncio'),
-                                ],
-                              ),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  "/upsert-notice",
-                                  arguments: {
-                                    "notice": notice.data(),
-                                    "edit": true,
-                                  },
-                                );
-                              },
-                            ),
-                            PopupMenuItem(
-                              child: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    'Apagar anúncio',
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              onTap: () {
-                                _showDeleteConfirmation(context);
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                    const SizedBox(
+                      height: 10,
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,31 +127,84 @@ class MyNoticeCard extends StatelessWidget {
                         const SizedBox(width: 30),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           vehicle["name"],
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 5),
                         Text(
                           vehicleTypes[vehicle["type"]]!,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             color: Colors.black45,
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          "Criado em: ${formatDate(notice["createdAt"])}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black45,
+                        const Divider(),
+                        const SizedBox(height: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: List<Widget>.from(
+                            vehicle["optionals"]
+                                .where((optional) => optional["value"] == true)
+                                .map<Widget>(
+                              (optional) {
+                                return Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check,
+                                          color: Colors.black54,
+                                          size: 15,
+                                        ),
+                                        const SizedBox(
+                                          width: 6,
+                                        ),
+                                        Text(
+                                          optional["label"],
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(
+                                      height: 5,
+                                    )
+                                  ],
+                                );
+                              },
+                            ).toList(),
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              "/notice-details",
+                              arguments: {
+                                "notice": notice.data(),
+                              },
+                            );
+                          },
+                          style: ButtonStyle(
+                            fixedSize: MaterialStateProperty.all(
+                              const Size(
+                                double.maxFinite,
+                                40,
+                              ),
+                            ),
+                          ),
+                          child: const Text("RESERVAR AGORA"),
                         ),
                       ],
                     )

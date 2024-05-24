@@ -3,7 +3,7 @@ import 'package:econodrive/components/app-bar.dart';
 import 'package:econodrive/components/bottom-navigation-bar.dart';
 import 'package:flutter/material.dart';
 
-import '../components/notice-card.dart';
+import '../components/notice_card.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -49,22 +49,15 @@ class Home extends StatelessWidget {
 
                     var notices = snapshot.data!.docs;
                     return ListView(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 420,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              ...notices.map(
-                                (notice) {
-                                  return NoticeCard(
-                                    notice: notice,
-                                  );
-                                },
-                              )
-                            ],
-                          ),
-                        ),
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        ...notices.map(
+                          (notice) {
+                            return NoticeCard(
+                              notice: notice,
+                            );
+                          },
+                        )
                       ],
                     );
                   },

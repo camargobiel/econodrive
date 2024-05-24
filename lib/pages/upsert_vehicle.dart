@@ -275,37 +275,39 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: List<Widget>.from(fields["optionals"]
-                          .where((optional) => optional["value"] == true)
-                          .map<Widget>(
-                        (optional) {
-                          return Column(
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.check,
-                                    color: Colors.black54,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    optional["label"],
-                                    style: const TextStyle(
-                                      fontSize: 15,
+                      children: List<Widget>.from(
+                        fields["optionals"]
+                            .where((optional) => optional["value"] == true)
+                            .map<Widget>(
+                          (optional) {
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check,
                                       color: Colors.black54,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              )
-                            ],
-                          );
-                        },
-                      ).toList()),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      optional["label"],
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(
+                                  height: 5,
+                                )
+                              ],
+                            );
+                          },
+                        ).toList(),
+                      ),
                     ),
                     const SizedBox(
                       height: 10,
