@@ -19,6 +19,7 @@ class _MyNoticesState extends State<MyNotices> {
     var notices = FirebaseFirestore.instance
         .collection("notices")
         .where("createdBy", isEqualTo: user!.uid)
+        .orderBy("createdAt", descending: true)
         .snapshots();
     return notices;
   }
@@ -56,51 +57,43 @@ class _MyNoticesState extends State<MyNotices> {
           );
         },
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Meus anúncios",
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Meus anúncios",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              const SizedBox(
+                height: 20,
+              ),
+              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _readNotices(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
                   }
                   var notices = snapshot.data!.docs;
-                  return ListView(
-                    children: <Widget>[
-                      SizedBox(
-                        height: double.maxFinite,
-                        child: ListView(
-                          scrollDirection: Axis.vertical,
-                          children: notices.map(
-                            (notice) {
-                              return MyNoticeCard(
-                                notice: notice,
-                              );
-                            },
-                          ).toList(),
-                        ),
-                      ),
-                    ],
+                  return Column(
+                    children: notices.map(
+                      (notice) {
+                        return MyNoticeCard(
+                          notice: notice,
+                        );
+                      },
+                    ).toList(),
                   );
                 },
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );

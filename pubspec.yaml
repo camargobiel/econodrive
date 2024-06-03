@@ -42,6 +42,7 @@ dependencies:
   image_picker:
   firebase_storage:
   cross_file_image:
+  intl:
 
 dev_dependencies:
   flutter_test:

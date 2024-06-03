@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:econodrive/components/select-city.dart';
 import 'package:econodrive/components/select_vehicle_alert.dart';
+import 'package:econodrive/utils/format-date.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -16,10 +17,12 @@ class UpsertNoticePage extends StatefulWidget {
 class _UpsertNoticePageState extends State<UpsertNoticePage> {
   final firestore = FirebaseFirestore.instance;
   final formKey = GlobalKey<FormState>();
-  Map<String, dynamic>? selectedVehicle;
+  Map? selectedVehicle;
   bool _isInitialized = false;
   Map? _noticeToEdit;
   bool? _isEditing = false;
+  DateTime withdrawDate = DateTime.now();
+  DateTime returnDate = DateTime.now();
 
   Map<String, dynamic> fields = {
     'originCity': "",
@@ -80,6 +83,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
     await noticesCollectionRef.doc(noticeToEdit["id"]).update(
       {
         ...fields,
+        "vehicleId": selectedVehicle!["id"],
       },
     );
     ScaffoldMessenger.of(context).showSnackBar(
@@ -126,6 +130,45 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
     );
   }
 
+  Future<void> _selectWithdrawDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: withdrawDate,
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != withdrawDate) {
+      setState(() {
+        withdrawDate = picked;
+        fields["withdrawDate"] = formatDate(picked.toIso8601String());
+      });
+    }
+  }
+
+  Future<void> _selectReturnDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: returnDate,
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != returnDate) {
+      setState(() {
+        returnDate = picked;
+        fields["returnDate"] = formatDate(picked.toIso8601String());
+      });
+    }
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _readNoticeVehicle() {
+    if (_noticeToEdit == null) return null;
+    var user = FirebaseAuth.instance.currentUser;
+    var vehicles = FirebaseFirestore.instance
+        .collection("vehicles")
+        .where("createdBy", isEqualTo: user!.uid)
+        .where("id", isEqualTo: _noticeToEdit!["vehicleId"])
+        .snapshots();
+    return vehicles;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -140,12 +183,18 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
         _isEditing = edit;
       });
 
+      if (noticeToEdit != null) {
+        setState(() {
+          withdrawDate = stringDateToDatetime(noticeToEdit["withdrawDate"])!;
+          returnDate = stringDateToDatetime(noticeToEdit["returnDate"])!;
+        });
+      }
+
       noticeToEdit?.forEach((key, value) {
         if (fields.containsKey(key)) {
           fields[key] = value;
         }
       });
-      selectedVehicle = noticeToEdit?["vehicleId"];
       _isInitialized = true;
     }
   }
@@ -235,46 +284,51 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
                       children: [
                         Flexible(
                           child: TextFormField(
-                            initialValue: fields["withdrawDate"],
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               label: Text("Data de retirada"),
                             ),
-                            keyboardType: TextInputType.datetime,
-                            onChanged: (value) {
-                              fields["withdrawDate"] = value;
-                            },
+                            readOnly: true,
                             validator: (value) {
-                              if (value == "") {
+                              if (value == null || value.isEmpty) {
                                 return "Campo obrigatório";
                               }
                               return null;
                             },
+                            onTap: () {
+                              _selectWithdrawDate(context);
+                            },
+                            controller: TextEditingController(
+                              text: fields["withdrawDate"] != ""
+                                  ? fields["withdrawDate"]
+                                  : "",
+                            ),
                           ),
-                        ),
-                        const SizedBox(
-                          width: 5,
                         ),
                         const SizedBox(
                           width: 5,
                         ),
                         Flexible(
                           child: TextFormField(
-                            initialValue: fields["returnDate"],
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               label: Text("Data de devolução"),
                             ),
-                            keyboardType: TextInputType.datetime,
-                            onChanged: (value) {
-                              fields["returnDate"] = value;
-                            },
+                            readOnly: true,
                             validator: (value) {
-                              if (value == "") {
+                              if (value == null || value.isEmpty) {
                                 return "Campo obrigatório";
                               }
                               return null;
                             },
+                            onTap: () {
+                              _selectReturnDate(context);
+                            },
+                            controller: TextEditingController(
+                              text: fields["returnDate"] != ""
+                                  ? fields["returnDate"]
+                                  : "",
+                            ),
                           ),
                         ),
                       ],
@@ -282,24 +336,46 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
                     const SizedBox(
                       height: 20,
                     ),
-                    OutlinedButton(
-                      onPressed: () {
-                        _selectVehicle(context);
-                      },
-                      style: ButtonStyle(
-                        minimumSize: MaterialStateProperty.all(
-                          const Size(
-                            double.maxFinite,
-                            50,
+                    StreamBuilder<dynamic>(
+                      stream: _readNoticeVehicle(),
+                      builder: (context, snapshot) {
+                        if (_isEditing == true &&
+                            snapshot.hasData &&
+                            selectedVehicle == null) {
+                          List<dynamic> vehicles = snapshot.data.docs
+                              .map((e) => e.data() as Map<String, dynamic>)
+                              .toList();
+                          Map vehicle = vehicles[0];
+                          selectedVehicle = vehicle;
+                        }
+                        if (selectedVehicle == null) {
+                          return OutlinedButton(
+                            onPressed: () {
+                              _selectVehicle(context);
+                            },
+                            style: ButtonStyle(
+                              minimumSize: MaterialStateProperty.all(
+                                const Size(double.maxFinite, 50),
+                              ),
+                            ),
+                            child: const Text("Selecionar veículo"),
+                          );
+                        }
+                        return OutlinedButton(
+                          onPressed: () {
+                            _selectVehicle(context);
+                          },
+                          style: ButtonStyle(
+                            minimumSize: MaterialStateProperty.all(
+                              const Size(double.maxFinite, 50),
+                            ),
                           ),
-                        ),
-                      ),
-                      child: Text(
-                        selectedVehicle == null
-                            ? "Selecionar veículo"
-                            : "Selecionado: ${selectedVehicle?["name"]}",
-                      ),
-                    )
+                          child: Text(
+                            "Selecionado: ${selectedVehicle!["name"]}",
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

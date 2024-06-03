@@ -13,6 +13,7 @@ class MyVehicles extends StatelessWidget {
     var vehicles = FirebaseFirestore.instance
         .collection("vehicles")
         .where("createdBy", isEqualTo: user!.uid)
+        .orderBy("createdAt", descending: true)
         .snapshots();
     return vehicles;
   }

@@ -47,12 +47,6 @@ class CustomBottomNavigationBar extends StatelessWidget {
         "route": "/my-vehicles",
         "permission": "rental"
       },
-      {
-        "label": 'Perfil',
-        "icon": const Icon(Icons.person),
-        "route": "/profile",
-        "permission": ""
-      },
     ];
 
     return StreamBuilder<dynamic>(

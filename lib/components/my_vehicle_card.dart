@@ -23,6 +23,17 @@ class MyVehicleCard extends StatelessWidget {
         .collection("vehicles")
         .doc(vehicle["id"])
         .delete();
+    FirebaseFirestore.instance
+        .collection("notices")
+        .where("vehicleId", isEqualTo: vehicle["id"])
+        .get()
+        .then(
+      (notices) {
+        for (var notice in notices.docs) {
+          notice.reference.delete();
+        }
+      },
+    );
     Navigator.pop(context);
   }
 
@@ -39,7 +50,7 @@ class MyVehicleCard extends StatelessWidget {
             ),
           ),
           content: const Text(
-            "Tem certeza que deseja excluir esse veículo? Ele será excluído para sempre.",
+            "Tem certeza que deseja excluir esse veículo? Todos os anúncios relacionados a ele também serão excluídos.",
             style: TextStyle(
               color: Colors.black54,
             ),
@@ -166,7 +177,6 @@ class MyVehicleCard extends StatelessWidget {
                 Text(
                   vehicle["name"],
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),
                 ),
@@ -203,7 +213,6 @@ class MyVehicleCard extends StatelessWidget {
                   "Opcionais:",
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(

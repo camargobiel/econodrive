@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cross_file_image/cross_file_image.dart';
 import 'package:econodrive/components/choose-vehicle-optionals.dart';
@@ -79,7 +77,6 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     var user = FirebaseAuth.instance.currentUser;
     var vehiclesCollectionRef =
         FirebaseFirestore.instance.collection("vehicles");
-    print(pickedVehicleImage);
     String? imageUrl = await uploadImageToFirestore(pickedVehicleImage);
     var docRef = await vehiclesCollectionRef.add(
       {
@@ -111,10 +108,12 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
   _edit(BuildContext context, Map vehicleToEdit) async {
     var vehiclesCollectionRef =
         FirebaseFirestore.instance.collection("vehicles");
+    String? imageUrl = await uploadImageToFirestore(pickedVehicleImage);
     await vehiclesCollectionRef.doc(vehicleToEdit["id"]).update(
       {
         ...fields,
         "optionals": fields["optionals"].toList(),
+        "image": imageUrl ?? vehicleToEdit["image"]
       },
     );
     ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +147,32 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
     setState(() {
       pickedVehicleImage = pickedImage;
     });
+  }
+
+  Widget renderImage(Map? vehicle) {
+    if (pickedVehicleImage != null) {
+      return Column(
+        children: [
+          Image(
+            image: XFileImage(pickedVehicleImage!),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+        ],
+      );
+    }
+    if (vehicle?["image"] != null) {
+      return Column(
+        children: [
+          Image.network(vehicle!["image"]),
+          const SizedBox(
+            height: 20,
+          ),
+        ],
+      );
+    }
+    return const SizedBox();
   }
 
   @override
@@ -320,11 +345,13 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
                           },
                           child: const Text('Escolher imagem do veículo'),
                         ),
-                        pickedVehicleImage != null
+                        pickedVehicleImage != null ||
+                                vehicleToEdit?["image"] != null
                             ? IconButton(
                                 onPressed: () {
                                   setState(() {
                                     pickedVehicleImage = null;
+                                    vehicleToEdit?["image"] = null;
                                   });
                                 },
                                 icon: const Icon(
@@ -338,18 +365,9 @@ class _UpsertVehiclePageState extends State<UpsertVehiclePage> {
                     const SizedBox(
                       height: 20,
                     ),
-                    pickedVehicleImage != null
-                        ? Column(
-                            children: [
-                              Image(
-                                image: XFileImage(pickedVehicleImage!),
-                              ),
-                              const SizedBox(
-                                height: 20,
-                              ),
-                            ],
-                          )
-                        : const SizedBox(),
+                    renderImage(
+                      vehicleToEdit,
+                    ),
                   ],
                 ),
               ),
