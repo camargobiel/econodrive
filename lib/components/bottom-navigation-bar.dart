@@ -36,6 +36,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
         "permission": ""
       },
       {
+        "label": 'Notificações',
+        "icon": const Icon(Icons.notifications),
+        "route": "/home",
+        "permission": ""
+      },
+      {
         "label": 'Anúncios',
         "icon": const Icon(Icons.announcement),
         "route": "/my-notices",

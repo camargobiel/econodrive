@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:econodrive/utils/format-date.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
@@ -11,10 +10,8 @@ class NoticeDetailsPage extends StatelessWidget {
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _readNoticeVehicle(
       String vehicleId) {
-    var user = FirebaseAuth.instance.currentUser;
     var vehicles = FirebaseFirestore.instance
         .collection("vehicles")
-        .where("createdBy", isEqualTo: user!.uid)
         .where("id", isEqualTo: vehicleId)
         .snapshots();
     return vehicles;
@@ -42,6 +39,9 @@ class NoticeDetailsPage extends StatelessWidget {
             stream: _readNoticeVehicle(notice["vehicleId"]),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
+                return Container();
+              }
+              if (snapshot.data!.docs.isEmpty) {
                 return Container();
               }
               var vehicle = snapshot.data!.docs[0];

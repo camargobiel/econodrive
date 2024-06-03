@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/constants.dart';
@@ -13,10 +12,8 @@ class NoticeCard extends StatelessWidget {
   });
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _readNoticeVehicle() {
-    var user = FirebaseAuth.instance.currentUser;
     var vehicles = FirebaseFirestore.instance
         .collection("vehicles")
-        .where("createdBy", isEqualTo: user!.uid)
         .where("id", isEqualTo: notice["vehicleId"])
         .snapshots();
     return vehicles;
@@ -33,6 +30,9 @@ class NoticeCard extends StatelessWidget {
             stream: _readNoticeVehicle(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
+                return Container();
+              }
+              if (snapshot.data!.docs.isEmpty) {
                 return Container();
               }
               var vehicle = snapshot.data!.docs[0];
