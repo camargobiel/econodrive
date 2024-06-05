@@ -4,6 +4,7 @@ import 'package:econodrive/components/select_vehicle_alert.dart';
 import 'package:econodrive/utils/format-date.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class UpsertNoticePage extends StatefulWidget {
   const UpsertNoticePage({
@@ -29,6 +30,7 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
     "destinyCity": "",
     "withdrawDate": "",
     "returnDate": "",
+    "observation": "",
   };
 
   _chooseCity(String field) {
@@ -207,6 +209,27 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
             ? const Text("Editar anúncio")
             : const Text("Criar anúncio"),
       ),
+      bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                _submit(context, _noticeToEdit);
+              }
+            },
+            style: ButtonStyle(
+              fixedSize: MaterialStateProperty.all(const Size(
+                double.maxFinite,
+                50,
+              )),
+            ),
+            child: _isEditing == true
+                ? const Text("Salvar")
+                : const Text("Criar anúncio"),
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(15),
@@ -376,32 +399,23 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
                         );
                       },
                     ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: "Observações",
+                      ),
+                      initialValue: fields["observation"],
+                      onChanged: (value) {
+                        fields["observation"] = value;
+                      },
+                      maxLines: 3,
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
-              Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        _submit(context, _noticeToEdit);
-                      }
-                    },
-                    style: ButtonStyle(
-                      fixedSize: MaterialStateProperty.all(const Size(
-                        double.maxFinite,
-                        50,
-                      )),
-                    ),
-                    child: _isEditing == true
-                        ? const Text("Salvar")
-                        : const Text("Criar anúncio"),
-                  )
-                ],
-              )
             ],
           ),
         ),

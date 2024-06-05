@@ -36,6 +36,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
         "permission": ""
       },
       {
+        "label": 'Minhas reservas',
+        "icon": const Icon(Icons.calendar_today),
+        "route": "/my-reservations",
+        "permission": "personal"
+      },
+      {
         "label": 'Notificações',
         "icon": const Icon(Icons.notifications),
         "route": "/home",

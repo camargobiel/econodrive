@@ -1,44 +1,62 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:econodrive/utils/constants.dart';
+import 'package:econodrive/utils/format-date.dart';
 import 'package:flutter/material.dart';
 
-import '../utils/constants.dart';
-import '../utils/format-date.dart';
+class MyReservationCard extends StatelessWidget {
+  final QueryDocumentSnapshot<Map<String, dynamic>> reservation;
 
-class MyNoticeCard extends StatelessWidget {
-  final QueryDocumentSnapshot<Map<String, dynamic>> notice;
-
-  const MyNoticeCard({
+  const MyReservationCard({
     super.key,
-    required this.notice,
+    required this.reservation,
   });
 
-  void _delete(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Anúncio excluído com sucesso!',
-        ),
-        backgroundColor: Colors.red,
-      ),
-    );
-    FirebaseFirestore.instance.collection("notices").doc(notice["id"]).delete();
-    Navigator.pop(context);
+  Stream<QuerySnapshot<Map<String, dynamic>>> _readReservationVehicle() {
+    var vehicles = FirebaseFirestore.instance
+        .collection("vehicles")
+        .where("id", isEqualTo: reservation["vehicleId"])
+        .snapshots();
+    return vehicles;
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
+  void _cancelReservation(BuildContext context) async {
+    try {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Reserva cancelada com sucesso!',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      var noticesCollectionRef =
+          FirebaseFirestore.instance.collection("notices");
+      await noticesCollectionRef.doc(reservation["id"]).update(
+        {
+          "status": "announced",
+          "rentedByName": "",
+          "rentedById": "",
+          "rentedAt": "",
+        },
+      );
+    } catch (e) {}
+  }
+
+  void _showCancelConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (buildContext) {
         return AlertDialog(
           title: const Text(
-            "Excluir anúncio",
+            "Cancelar reserva",
             style: TextStyle(
               color: Colors.red,
               fontWeight: FontWeight.bold,
             ),
           ),
           content: const Text(
-            "Tem certeza que deseja excluir esse anúncio? Ele será excluído para sempre.",
+            "Tem certeza que deseja cancelar essa reserva? Essa ação não poderá ser desfeita.",
             style: TextStyle(
               color: Colors.black54,
             ),
@@ -49,35 +67,21 @@ class MyNoticeCard extends StatelessWidget {
                 Navigator.pop(context);
               },
               child: const Text(
-                "Cancelar",
-                style: TextStyle(
-                  color: Colors.black,
-                ),
+                "Voltar",
               ),
             ),
             ElevatedButton(
               onPressed: () {
-                _delete(context);
+                _cancelReservation(context);
               },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateColor.resolveWith(
-                  (states) => Colors.red,
-                ),
+              child: const Text(
+                "Confirmar",
               ),
-              child: const Text("Excluir"),
             ),
           ],
         );
       },
     );
-  }
-
-  Stream<QuerySnapshot<Map<String, dynamic>>> _readNoticeVehicle() {
-    var vehicles = FirebaseFirestore.instance
-        .collection("vehicles")
-        .where("id", isEqualTo: notice["vehicleId"])
-        .snapshots();
-    return vehicles;
   }
 
   @override
@@ -88,7 +92,7 @@ class MyNoticeCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: StreamBuilder<dynamic>(
-              stream: _readNoticeVehicle(),
+              stream: _readReservationVehicle(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return Container();
@@ -100,7 +104,6 @@ class MyNoticeCard extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         PopupMenuButton(
                           tooltip: "Opções",
@@ -110,37 +113,14 @@ class MyNoticeCard extends StatelessWidget {
                               child: const Row(
                                 children: [
                                   Icon(
-                                    Icons.edit_note,
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text('Editar anúncio'),
-                                ],
-                              ),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  "/upsert-notice",
-                                  arguments: {
-                                    "notice": notice.data(),
-                                    "edit": true,
-                                  },
-                                );
-                              },
-                            ),
-                            PopupMenuItem(
-                              child: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete,
+                                    Icons.cancel,
                                     color: Colors.red,
                                   ),
                                   SizedBox(
                                     width: 10,
                                   ),
                                   Text(
-                                    'Apagar anúncio',
+                                    'Cancelar reserva',
                                     style: TextStyle(
                                       color: Colors.red,
                                     ),
@@ -148,12 +128,15 @@ class MyNoticeCard extends StatelessWidget {
                                 ],
                               ),
                               onTap: () {
-                                _showDeleteConfirmation(context);
+                                _showCancelConfirmation(context);
                               },
                             ),
                           ],
                         ),
                       ],
+                    ),
+                    const SizedBox(
+                      height: 10,
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +167,7 @@ class MyNoticeCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "${notice["originCity"]}",
+                              "${reservation["originCity"]}",
                               style: const TextStyle(
                                 fontSize: 16,
                               ),
@@ -193,7 +176,7 @@ class MyNoticeCard extends StatelessWidget {
                               height: 4,
                             ),
                             Text(
-                              "Retirada: ${notice["withdrawDate"]}",
+                              "Retirada: ${reservation["withdrawDate"]}",
                               style: const TextStyle(
                                 fontSize: 15,
                                 color: Colors.black54,
@@ -203,7 +186,7 @@ class MyNoticeCard extends StatelessWidget {
                               height: 10,
                             ),
                             Text(
-                              "${notice["destinyCity"]}",
+                              "${reservation["destinyCity"]}",
                               style: const TextStyle(
                                 fontSize: 16,
                               ),
@@ -212,7 +195,7 @@ class MyNoticeCard extends StatelessWidget {
                               height: 4,
                             ),
                             Text(
-                              "Devolução: ${notice["returnDate"]}",
+                              "Devolução: ${reservation["returnDate"]}",
                               style: const TextStyle(
                                 fontSize: 15,
                                 color: Colors.black54,
@@ -257,7 +240,9 @@ class MyNoticeCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          "Criado em: ${formatDate(notice["createdAt"])}",
+                          "Reservado em: ${formatDate(
+                            reservation["rentedAt"],
+                          )}",
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.black45,

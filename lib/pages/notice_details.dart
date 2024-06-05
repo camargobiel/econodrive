@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:econodrive/utils/format-date.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 import '../utils/constants.dart';
 
@@ -17,6 +17,69 @@ class NoticeDetailsPage extends StatelessWidget {
     return vehicles;
   }
 
+  _createRentNotification(Map noticeToEdit) async {
+    var notificationsCollectionRef =
+        FirebaseFirestore.instance.collection("notifications");
+    await notificationsCollectionRef.add({
+      "userId": noticeToEdit["createdById"],
+      "noticeId": noticeToEdit["id"],
+      "type": "reservation",
+      "createdAt": DateTime.now(),
+    });
+  }
+
+  _rentVehicle(BuildContext context) async {
+    try {
+      final arguments = (ModalRoute.of(context)?.settings.arguments) as Map?;
+      Map? noticeToEdit = arguments?["notice"];
+      var noticesCollectionRef =
+          FirebaseFirestore.instance.collection("notices");
+      var user = FirebaseAuth.instance.currentUser;
+      await noticesCollectionRef.doc(noticeToEdit!["id"]).update({
+        "status": "reserved",
+        "rentedById": user!.uid,
+        "rentedByName": user.displayName,
+        "rentedAt": DateTime.now().toIso8601String(),
+      });
+      await _createRentNotification(noticeToEdit);
+      Navigator.of(context).pop();
+      Navigator.pushNamed(
+        context,
+        "/my-reservations",
+      );
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  _showRendVehicleModal(BuildContext context, Map notice) {
+    showDialog(
+      context: context,
+      builder: (BuildContext confirmationContext) {
+        return AlertDialog(
+          title: const Text("Reservar veículo"),
+          content: const Text(
+            "Deseja reservar o veículo? Você poderá cancelar a reserva na página de 'Minhas reservas'.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _rentVehicle(context);
+              },
+              child: const Text("Confirmar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final arguments = (ModalRoute.of(context)?.settings.arguments) as Map?;
@@ -27,253 +90,337 @@ class NoticeDetailsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(),
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(
-            Radius.circular(15),
+      bottomNavigationBar: BottomAppBar(
+        child: BottomAppBar(
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: ElevatedButton(
+              onPressed: () {
+                _showRendVehicleModal(context, notice);
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                ),
+              ),
+              child: const Text("Reservar agora"),
+            ),
           ),
         ),
-        child: StreamBuilder<dynamic>(
-            stream: _readNoticeVehicle(notice["vehicleId"]),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Container();
-              }
-              if (snapshot.data!.docs.isEmpty) {
-                return Container();
-              }
-              var vehicle = snapshot.data!.docs[0];
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.all(
+              Radius.circular(15),
+            ),
+          ),
+          child: StreamBuilder<dynamic>(
+              stream: _readNoticeVehicle(notice["vehicleId"]),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Container();
+                }
+                if (snapshot.data!.docs.isEmpty) {
+                  return Container();
+                }
+                var vehicle = snapshot.data!.docs[0];
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        vehicle["image"],
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              vehicle["image"],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 21,
+                    ),
+                    Text(
+                      vehicle["name"],
+                      style: const TextStyle(
+                        fontSize: 24,
                       ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 21,
-                  ),
-                  Text(
-                    vehicle["name"],
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(
+                      height: 10,
                     ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    vehicleTypes[vehicle["type"]]!,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.black54,
+                    Text(
+                      vehicleTypes[vehicle["type"]]!,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.black54,
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Divider(),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Origem:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    const Divider(),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Origem:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              "${notice["originCity"]}",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
+                              const SizedBox(
+                                width: 5,
                               ),
-                            ),
-                          ],
+                              Text(
+                                "${notice["originCity"]}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Destino:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              "${notice["destinyCity"]}",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(
+                          height: 12,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Divider(),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Data de retirada:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        SizedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Destino:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              "${notice["withdrawDate"]}",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
+                              const SizedBox(
+                                width: 5,
                               ),
-                            ),
-                          ],
+                              Text(
+                                "${notice["destinyCity"]}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Data de devolução:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    const Divider(),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Data de retirada:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              "${notice["returnDate"]}",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
+                              const SizedBox(
+                                width: 5,
                               ),
-                            ),
-                          ],
+                              Text(
+                                "${notice["withdrawDate"]}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Divider(),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Data da criação do anúncio:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              formatDate(notice["createdAt"]),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(
+                          height: 10,
                         ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      SizedBox(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Locadora:",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                        SizedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Data de devolução:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
                               ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text(
-                              notice["createdByName"] ?? "",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
+                              const SizedBox(
+                                width: 5,
                               ),
-                            ),
-                          ],
+                              Text(
+                                "${notice["returnDate"]}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Divider(),
-                    ],
-                  ),
-                ],
-              );
-            }),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    const Divider(),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Data da criação do anúncio:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              Text(
+                                formatDate(notice["createdAt"]),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        SizedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Locadora:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              Text(
+                                notice["createdByName"] ?? "",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        const Divider(),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        const Text(
+                          "Opcionais",
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: List<Widget>.from(
+                            vehicle["optionals"]
+                                .where((optional) => optional["value"] == true)
+                                .map<Widget>(
+                              (optional) {
+                                return Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check,
+                                          color: Colors.black54,
+                                          size: 15,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          optional["label"],
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 5),
+                                  ],
+                                );
+                              },
+                            ).toList(),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        const Text(
+                          "Observações",
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          notice["observation"],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }),
+        ),
       ),
     );
   }
