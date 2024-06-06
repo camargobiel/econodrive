@@ -16,12 +16,14 @@ class MyNoticeCard extends StatelessWidget {
     "active": Colors.green,
     "reserved": Colors.blue,
     "inactive": Colors.red,
+    "done": Colors.black54,
   };
 
   Map<String, String> statusNames = {
     "active": "Ativo",
     "reserved": "Reservado",
     "inactive": "Inativo",
+    "done": "Encerrado",
   };
 
   void _delete(BuildContext context) {
@@ -63,6 +65,20 @@ class MyNoticeCard extends StatelessWidget {
     );
     FirebaseFirestore.instance.collection("notices").doc(notice["id"]).update({
       "status": "active",
+    });
+  }
+
+  _end(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Anúncio encerrado com sucesso!',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+    FirebaseFirestore.instance.collection("notices").doc(notice["id"]).update({
+      "status": "done",
     });
   }
 
@@ -160,6 +176,53 @@ class MyNoticeCard extends StatelessWidget {
     );
   }
 
+  void _showEndConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (buildContext) {
+        return AlertDialog(
+          title: const Text(
+            "Encerrar anúncio",
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "Tem certeza que deseja encerrar esse anúncio? Ele será finalizado e não poderá ser mais ativado.",
+            style: TextStyle(
+              color: Colors.black54,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _end(context);
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateColor.resolveWith(
+                  (states) => Colors.red,
+                ),
+              ),
+              child: const Text("Encerrar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> _readNoticeVehicle() {
     var vehicles = FirebaseFirestore.instance
         .collection("vehicles")
@@ -219,7 +282,8 @@ class MyNoticeCard extends StatelessWidget {
                               ),
                             ),
                             PopupMenuItem(
-                              enabled: notice["status"] == "active",
+                              enabled: notice["status"] == "active" ||
+                                  notice["status"] == "done",
                               onTap: () {
                                 _showDeleteConfirmation(context);
                               },
@@ -227,7 +291,8 @@ class MyNoticeCard extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.delete,
-                                    color: notice["status"] == "active"
+                                    color: notice["status"] == "active" ||
+                                            notice["status"] == "done"
                                         ? Colors.red
                                         : Colors.black54,
                                   ),
@@ -237,7 +302,8 @@ class MyNoticeCard extends StatelessWidget {
                                   Text(
                                     'Apagar anúncio',
                                     style: TextStyle(
-                                      color: notice["status"] == "active"
+                                      color: notice["status"] == "active" ||
+                                              notice["status"] == "done"
                                           ? Colors.red
                                           : Colors.black38,
                                     ),
@@ -293,6 +359,33 @@ class MyNoticeCard extends StatelessWidget {
                                     style: TextStyle(
                                       color: notice["status"] == "inactive"
                                           ? Colors.green
+                                          : Colors.black38,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              enabled: notice["status"] == "reserved",
+                              onTap: () {
+                                _showEndConfirmation(context);
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.stop_circle,
+                                    color: notice["status"] == "reserved"
+                                        ? Colors.red
+                                        : Colors.black54,
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    'Encerrar anúncio',
+                                    style: TextStyle(
+                                      color: notice["status"] == "reserved"
+                                          ? Colors.red
                                           : Colors.black38,
                                     ),
                                   ),

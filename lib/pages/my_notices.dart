@@ -14,14 +14,25 @@ class MyNotices extends StatefulWidget {
 }
 
 class _MyNoticesState extends State<MyNotices> {
+  String statusFilter = "";
+  List<Map<String, String>> statusFilters = [
+    {"name": "Todos", "value": ""},
+    {"name": "Ativos", "value": "active"},
+    {"name": "Reservados", "value": "reserved"},
+    {"name": "Inativos", "value": "inactive"},
+    {"name": "Encerrados", "value": "done"},
+  ];
+
   _readNotices() {
     var user = FirebaseAuth.instance.currentUser;
     var notices = FirebaseFirestore.instance
         .collection("notices")
         .where("createdBy", isEqualTo: user!.uid)
-        .orderBy("createdAt", descending: true)
-        .snapshots();
-    return notices;
+        .orderBy("createdAt", descending: true);
+    if (statusFilter != "") {
+      notices = notices.where("status", isEqualTo: statusFilter);
+    }
+    return notices.snapshots();
   }
 
   _readUser() {
@@ -74,11 +85,67 @@ class _MyNoticesState extends State<MyNotices> {
               const SizedBox(
                 height: 20,
               ),
+              SizedBox(
+                height: 35,
+                width: double.infinity,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: statusFilters.map(
+                    (filter) {
+                      return Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                statusFilter = filter["value"]!;
+                              });
+                            },
+                            style: ButtonStyle(
+                              shape: MaterialStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18.0),
+                                  side: const BorderSide(color: Colors.red),
+                                ),
+                              ),
+                              shadowColor: MaterialStateProperty.all<Color>(
+                                Colors.transparent,
+                              ),
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                statusFilter == filter["value"]
+                                    ? Colors.red
+                                    : Colors.white,
+                              ),
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                statusFilter == filter["value"]
+                                    ? Colors.white
+                                    : Colors.red,
+                              ),
+                            ),
+                            child: Text(filter["name"]!),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                        ],
+                      );
+                    },
+                  ).toList(),
+                ),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _readNotices(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
+                  }
+                  if (snapshot.data!.docs.isEmpty) {
+                    return const Text(
+                      "Nenhum anúncio encontrado",
+                    );
                   }
                   var notices = snapshot.data!.docs;
                   return Column(

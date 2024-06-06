@@ -11,6 +11,7 @@ class Home extends StatelessWidget {
     var notices = FirebaseFirestore.instance
         .collection("notices")
         .orderBy("createdAt", descending: true)
+        .where("status", isEqualTo: "active")
         .limit(5)
         .snapshots();
     return notices;
@@ -20,6 +21,7 @@ class Home extends StatelessWidget {
     var notices = FirebaseFirestore.instance
         .collection("notices")
         .orderBy("withdrawDate", descending: false)
+        .where("status", isEqualTo: "active")
         .snapshots();
     return notices;
   }
