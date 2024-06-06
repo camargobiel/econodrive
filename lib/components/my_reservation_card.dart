@@ -7,7 +7,21 @@ import 'package:flutter/material.dart';
 class MyReservationCard extends StatelessWidget {
   final QueryDocumentSnapshot<Map<String, dynamic>> reservation;
 
-  const MyReservationCard({
+  Map<String, Color> statusColors = {
+    "active": Colors.green,
+    "reserved": Colors.blue,
+    "inactive": Colors.red,
+    "done": Colors.black54,
+  };
+
+  Map<String, String> statusNames = {
+    "active": "Ativo",
+    "reserved": "Reservado",
+    "inactive": "Inativo",
+    "done": "Encerrado",
+  };
+
+  MyReservationCard({
     super.key,
     required this.reservation,
   });
@@ -49,7 +63,7 @@ class MyReservationCard extends StatelessWidget {
           FirebaseFirestore.instance.collection("notices");
       await noticesCollectionRef.doc(reservation["id"]).update(
         {
-          "status": "announced",
+          "status": "active",
           "rentedByName": "",
           "rentedById": "",
           "rentedAt": "",
@@ -126,19 +140,24 @@ class MyReservationCard extends StatelessWidget {
                           itemBuilder: (BuildContext context) =>
                               <PopupMenuEntry>[
                             PopupMenuItem(
-                              child: const Row(
+                              enabled: reservation["status"] != "done",
+                              child: Row(
                                 children: [
                                   Icon(
                                     Icons.cancel,
-                                    color: Colors.red,
+                                    color: reservation["status"] == "done"
+                                        ? Colors.black26
+                                        : Colors.red,
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 10,
                                   ),
                                   Text(
                                     'Cancelar reserva',
                                     style: TextStyle(
-                                      color: Colors.red,
+                                      color: reservation["status"] == "done"
+                                          ? Colors.black26
+                                          : Colors.red,
                                     ),
                                   ),
                                 ],
@@ -263,6 +282,26 @@ class MyReservationCard extends StatelessWidget {
                             fontSize: 14,
                             color: Colors.black45,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              "Status: ",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              statusNames[reservation["status"]]!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: statusColors[reservation["status"]],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     )

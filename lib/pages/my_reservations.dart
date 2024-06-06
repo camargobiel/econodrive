@@ -12,13 +12,25 @@ class MyReservations extends StatefulWidget {
 }
 
 class _MyReservationsState extends State<MyReservations> {
+  String statusFilter = "";
+  List<Map<String, String>> statusFilters = [
+    {"name": "Todos", "value": ""},
+    {"name": "Reservados", "value": "reserved"},
+    {"name": "Encerrados", "value": "done"},
+  ];
+
   _readReservations() {
     var user = FirebaseAuth.instance.currentUser;
     var reservations = FirebaseFirestore.instance
         .collection("notices")
         .where("rentedById", isEqualTo: user!.uid)
-        .snapshots();
-    return reservations;
+        .orderBy("rentedAt", descending: true);
+
+    if (statusFilter != "") {
+      reservations = reservations.where("status", isEqualTo: statusFilter);
+    }
+
+    return reservations.snapshots();
   }
 
   @override
@@ -42,6 +54,59 @@ class _MyReservationsState extends State<MyReservations> {
                     color: Colors.red,
                     fontSize: 21,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  height: 35,
+                  width: double.infinity,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: statusFilters.map(
+                      (filter) {
+                        return Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  statusFilter = filter["value"]!;
+                                });
+                              },
+                              style: ButtonStyle(
+                                shape: MaterialStateProperty.all<
+                                    RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18.0),
+                                    side: const BorderSide(color: Colors.red),
+                                  ),
+                                ),
+                                shadowColor: MaterialStateProperty.all<Color>(
+                                  Colors.transparent,
+                                ),
+                                backgroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                  statusFilter == filter["value"]
+                                      ? Colors.red
+                                      : Colors.white,
+                                ),
+                                foregroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                  statusFilter == filter["value"]
+                                      ? Colors.white
+                                      : Colors.red,
+                                ),
+                              ),
+                              child: Text(filter["name"]!),
+                            ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                          ],
+                        );
+                      },
+                    ).toList(),
                   ),
                 ),
                 const SizedBox(

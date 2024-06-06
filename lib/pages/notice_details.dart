@@ -422,7 +422,7 @@ class NoticeDetailsPage extends StatelessWidget {
                           height: 10,
                         ),
                         Text(
-                          notice["observation"],
+                          notice["observation"] ?? "Nenhuma observação",
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.black54,
