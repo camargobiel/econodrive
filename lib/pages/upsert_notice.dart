@@ -58,7 +58,8 @@ class _UpsertNoticePageState extends State<UpsertNoticePage> {
         "createdBy": user!.uid,
         "createdByName": user.displayName,
         "createdAt": DateTime.now().toIso8601String(),
-        "vehicleId": selectedVehicle!["id"]
+        "vehicleId": selectedVehicle!["id"],
+        "status": "active",
       },
     );
     var noticeId = docRef.id;

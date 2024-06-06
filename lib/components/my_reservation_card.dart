@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:econodrive/utils/constants.dart';
 import 'package:econodrive/utils/format-date.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MyReservationCard extends StatelessWidget {
@@ -17,6 +18,20 @@ class MyReservationCard extends StatelessWidget {
         .where("id", isEqualTo: reservation["vehicleId"])
         .snapshots();
     return vehicles;
+  }
+
+  _createCancelRentNotification(
+    QueryDocumentSnapshot<Map<String, dynamic>> reservation,
+  ) async {
+    var notificationsCollectionRef =
+        FirebaseFirestore.instance.collection("notifications");
+    var user = FirebaseAuth.instance.currentUser;
+    await notificationsCollectionRef.add({
+      "userId": user!.uid,
+      "vehicleId": reservation["vehicleId"],
+      "type": "cancel",
+      "createdAt": DateTime.now().toIso8601String(),
+    });
   }
 
   void _cancelReservation(BuildContext context) async {
@@ -40,6 +55,7 @@ class MyReservationCard extends StatelessWidget {
           "rentedAt": "",
         },
       );
+      await _createCancelRentNotification(reservation);
     } catch (e) {}
   }
 

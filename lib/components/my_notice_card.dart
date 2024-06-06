@@ -7,10 +7,22 @@ import '../utils/format-date.dart';
 class MyNoticeCard extends StatelessWidget {
   final QueryDocumentSnapshot<Map<String, dynamic>> notice;
 
-  const MyNoticeCard({
+  MyNoticeCard({
     super.key,
     required this.notice,
   });
+
+  Map<String, Color> statusColors = {
+    "active": Colors.green,
+    "reserved": Colors.blue,
+    "inactive": Colors.red,
+  };
+
+  Map<String, String> statusNames = {
+    "active": "Ativo",
+    "reserved": "Reservado",
+    "inactive": "Inativo",
+  };
 
   void _delete(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -23,6 +35,35 @@ class MyNoticeCard extends StatelessWidget {
     );
     FirebaseFirestore.instance.collection("notices").doc(notice["id"]).delete();
     Navigator.pop(context);
+  }
+
+  void _inactivate(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Anúncio desativado com sucesso!',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+    FirebaseFirestore.instance.collection("notices").doc(notice["id"]).update({
+      "status": "inactive",
+    });
+    Navigator.pop(context);
+  }
+
+  _activate(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Anúncio ativado com sucesso!',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+    FirebaseFirestore.instance.collection("notices").doc(notice["id"]).update({
+      "status": "active",
+    });
   }
 
   void _showDeleteConfirmation(BuildContext context) {
@@ -72,6 +113,53 @@ class MyNoticeCard extends StatelessWidget {
     );
   }
 
+  void _showInactivationConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (buildContext) {
+        return AlertDialog(
+          title: const Text(
+            "Desativar anúncio",
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "Tem certeza que deseja desativar esse anúncio? Ele não será mais exibido para outros usuários.",
+            style: TextStyle(
+              color: Colors.black54,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _inactivate(context);
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateColor.resolveWith(
+                  (states) => Colors.red,
+                ),
+              ),
+              child: const Text("Desativar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> _readNoticeVehicle() {
     var vehicles = FirebaseFirestore.instance
         .collection("vehicles")
@@ -107,6 +195,17 @@ class MyNoticeCard extends StatelessWidget {
                           itemBuilder: (BuildContext context) =>
                               <PopupMenuEntry>[
                             PopupMenuItem(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  "/upsert-notice",
+                                  arguments: {
+                                    "notice": notice.data(),
+                                    "edit": true,
+                                  },
+                                );
+                              },
+                              enabled: notice["status"] == "active",
                               child: const Row(
                                 children: [
                                   Icon(
@@ -118,38 +217,87 @@ class MyNoticeCard extends StatelessWidget {
                                   Text('Editar anúncio'),
                                 ],
                               ),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  "/upsert-notice",
-                                  arguments: {
-                                    "notice": notice.data(),
-                                    "edit": true,
-                                  },
-                                );
-                              },
                             ),
                             PopupMenuItem(
-                              child: const Row(
+                              enabled: notice["status"] == "active",
+                              onTap: () {
+                                _showDeleteConfirmation(context);
+                              },
+                              child: Row(
                                 children: [
                                   Icon(
                                     Icons.delete,
-                                    color: Colors.red,
+                                    color: notice["status"] == "active"
+                                        ? Colors.red
+                                        : Colors.black54,
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 10,
                                   ),
                                   Text(
                                     'Apagar anúncio',
                                     style: TextStyle(
-                                      color: Colors.red,
+                                      color: notice["status"] == "active"
+                                          ? Colors.red
+                                          : Colors.black38,
                                     ),
                                   ),
                                 ],
                               ),
+                            ),
+                            PopupMenuItem(
+                              enabled: notice["status"] == "active",
                               onTap: () {
-                                _showDeleteConfirmation(context);
+                                _showInactivationConfirmation(context);
                               },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.remove_circle,
+                                    color: notice["status"] == "active"
+                                        ? Colors.red
+                                        : Colors.black54,
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    'Desativar anúncio',
+                                    style: TextStyle(
+                                      color: notice["status"] == "active"
+                                          ? Colors.red
+                                          : Colors.black38,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              enabled: notice["status"] == "inactive",
+                              onTap: () {
+                                _activate(context);
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.add_circle,
+                                    color: notice["status"] == "inactive"
+                                        ? Colors.green
+                                        : Colors.black54,
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    'Ativar anúncio',
+                                    style: TextStyle(
+                                      color: notice["status"] == "inactive"
+                                          ? Colors.green
+                                          : Colors.black38,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -262,6 +410,26 @@ class MyNoticeCard extends StatelessWidget {
                             fontSize: 14,
                             color: Colors.black45,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              "Status: ",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              statusNames[notice["status"]]!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: statusColors[notice["status"]],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     )

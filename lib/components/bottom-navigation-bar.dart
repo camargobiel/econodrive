@@ -26,6 +26,16 @@ class CustomBottomNavigationBar extends StatelessWidget {
     ).toList();
   }
 
+  _readUserNotifications() {
+    var notificationsCollectionRef =
+        FirebaseFirestore.instance.collection("notifications");
+    var user = FirebaseAuth.instance.currentUser;
+    var userNotifications = notificationsCollectionRef
+        .where("userId", isEqualTo: user!.uid)
+        .orderBy("createdAt", descending: true);
+    return userNotifications.snapshots();
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> buttons = [
@@ -42,12 +52,6 @@ class CustomBottomNavigationBar extends StatelessWidget {
         "permission": "personal"
       },
       {
-        "label": 'Notificações',
-        "icon": const Icon(Icons.notifications),
-        "route": "/home",
-        "permission": ""
-      },
-      {
         "label": 'Anúncios',
         "icon": const Icon(Icons.announcement),
         "route": "/my-notices",
@@ -58,6 +62,49 @@ class CustomBottomNavigationBar extends StatelessWidget {
         "icon": const Icon(Icons.car_rental),
         "route": "/my-vehicles",
         "permission": "rental"
+      },
+      {
+        "label": 'Notificações',
+        "icon": Stack(
+          children: [
+            const Icon(Icons.notifications),
+            Positioned(
+              right: 0,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _readUserNotifications(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox();
+                  }
+                  final notificationCount = snapshot.data?.docs.length ?? 0;
+                  return notificationCount > 0
+                      ? Container(
+                          padding: const EdgeInsets.all(1),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 12,
+                            minHeight: 12,
+                          ),
+                          child: Text(
+                            '$notificationCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      : const SizedBox();
+                },
+              ),
+            ),
+          ],
+        ),
+        "route": "/notifications",
+        "permission": ""
       },
     ];
 

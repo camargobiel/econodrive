@@ -2,6 +2,7 @@ import 'package:econodrive/pages/home.dart';
 import 'package:econodrive/pages/my_notices.dart';
 import 'package:econodrive/pages/my_reservations.dart';
 import 'package:econodrive/pages/my_vehicles.dart';
+import 'package:econodrive/pages/notifications.dart';
 import 'package:econodrive/pages/profile.dart';
 import 'package:econodrive/pages/upsert_notice.dart';
 import 'package:econodrive/pages/notice_details.dart';
@@ -33,6 +34,7 @@ class EconoDrive extends StatelessWidget {
         "/upsert-vehicle": (context) => const UpsertVehiclePage(),
         "/profile": (context) => const ProfilePage(),
         "/my-reservations": (context) => const MyReservations(),
+        "/notifications": (context) => const NotificationsPage(),
       },
       initialRoute: "/login",
     );

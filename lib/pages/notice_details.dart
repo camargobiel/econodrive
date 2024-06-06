@@ -20,11 +20,23 @@ class NoticeDetailsPage extends StatelessWidget {
   _createRentNotification(Map noticeToEdit) async {
     var notificationsCollectionRef =
         FirebaseFirestore.instance.collection("notifications");
+    var user = FirebaseAuth.instance.currentUser;
     await notificationsCollectionRef.add({
-      "userId": noticeToEdit["createdById"],
-      "noticeId": noticeToEdit["id"],
+      "userId": user!.uid,
+      "vehicleId": noticeToEdit["vehicleId"],
       "type": "reservation",
-      "createdAt": DateTime.now(),
+      "createdAt": DateTime.now().toIso8601String(),
+    });
+  }
+
+  _createRentNotificationForRentalCompany(Map noticeToEdit) async {
+    var notificationsCollectionRef =
+        FirebaseFirestore.instance.collection("notifications");
+    await notificationsCollectionRef.add({
+      "userId": noticeToEdit["createdBy"],
+      "vehicleId": noticeToEdit["vehicleId"],
+      "type": "reservation",
+      "createdAt": DateTime.now().toIso8601String(),
     });
   }
 
@@ -42,6 +54,7 @@ class NoticeDetailsPage extends StatelessWidget {
         "rentedAt": DateTime.now().toIso8601String(),
       });
       await _createRentNotification(noticeToEdit);
+      await _createRentNotificationForRentalCompany(noticeToEdit);
       Navigator.of(context).pop();
       Navigator.pushNamed(
         context,
