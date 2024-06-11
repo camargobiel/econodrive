@@ -80,6 +80,7 @@ class MyNoticeCard extends StatelessWidget {
     FirebaseFirestore.instance.collection("notices").doc(notice["id"]).update({
       "status": "done",
     });
+    Navigator.pop(context);
   }
 
   void _showDeleteConfirmation(BuildContext context) {

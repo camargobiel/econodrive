@@ -52,8 +52,12 @@ class MyVehicles extends StatelessWidget {
               stream: _readVehicles(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const CircularProgressIndicator();
+                  return Container(child: const CircularProgressIndicator());
                 }
+                if (snapshot.data!.docs.isEmpty) {
+                  return const Text("Nenhum veículo encontrado");
+                }
+
                 var vehicles = snapshot.data!.docs;
                 return ListView(
                   scrollDirection: Axis.vertical,

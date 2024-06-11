@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/constants.dart';
@@ -17,6 +18,13 @@ class NoticeCard extends StatelessWidget {
         .where("id", isEqualTo: notice["vehicleId"])
         .snapshots();
     return vehicles;
+  }
+
+  _readUser() {
+    var authUser = FirebaseAuth.instance.currentUser;
+    var user =
+        FirebaseFirestore.instance.collection("users").doc(authUser!.uid);
+    return user.snapshots();
   }
 
   @override
@@ -171,26 +179,39 @@ class NoticeCard extends StatelessWidget {
                     ],
                   ),
                   const Spacer(), // Pushes the button to the bottom
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/notice-details",
-                        arguments: {
-                          "notice": notice.data(),
-                        },
-                      );
-                    },
-                    style: ButtonStyle(
-                      fixedSize: MaterialStateProperty.all(
-                        const Size(
-                          double.maxFinite,
-                          40,
-                        ),
-                      ),
-                    ),
-                    child: const Text("RESERVAR AGORA"),
-                  ),
+                  StreamBuilder<dynamic>(
+                      stream: _readUser(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Container();
+                        }
+
+                        var user = snapshot.data;
+                        if (user["type"] == "rental") {
+                          return Container();
+                        }
+
+                        return ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              "/notice-details",
+                              arguments: {
+                                "notice": notice.data(),
+                              },
+                            );
+                          },
+                          style: ButtonStyle(
+                            fixedSize: MaterialStateProperty.all(
+                              const Size(
+                                double.maxFinite,
+                                40,
+                              ),
+                            ),
+                          ),
+                          child: const Text("RESERVAR AGORA"),
+                        );
+                      }),
                 ],
               );
             },

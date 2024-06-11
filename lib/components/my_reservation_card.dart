@@ -46,6 +46,12 @@ class MyReservationCard extends StatelessWidget {
       "type": "cancel",
       "createdAt": DateTime.now().toIso8601String(),
     });
+    await notificationsCollectionRef.add({
+      "userId": reservation["createdBy"],
+      "vehicleId": reservation["vehicleId"],
+      "type": "cancel",
+      "createdAt": DateTime.now().toIso8601String(),
+    });
   }
 
   void _cancelReservation(BuildContext context) async {
